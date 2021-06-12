@@ -1,0 +1,2926 @@
+<?xml version="1.0"?>
+<rss version="2.0">
+  <channel>
+    <title>猫でもわかるWebプログラミングと副業</title>
+    <link>https://www.utakata.work/</link>
+    <description>本業Webエンジニア。副業でもWebエンジニア。Web開発のヒントや、副業、日常生活のことを書きます。</description>
+    <lastBuildDate>Mon, 07 Jun 2021 07:00:00 +0900</lastBuildDate>
+    <docs>http://blogs.law.harvard.edu/tech/rss</docs>
+    <generator>Hatena::Blog</generator>
+    
+      
+      
+        <item>
+          <title>PHPでボトムアップDDD: 値オブジェクト / ValueObject</title>
+          <link>https://www.utakata.work/entry/php-ddd/valueobject</link>          <description>&lt;ul class=&quot;table-of-contents&quot;&gt;
+    &lt;li&gt;&lt;a href=&quot;#値オブジェクトを使わずプリミティブな型を使うとどうなるか&quot;&gt;値オブジェクトを使わず、プリミティブな型を使うとどうなるか&lt;/a&gt;&lt;ul&gt;
+            &lt;li&gt;&lt;a href=&quot;#各IDの型が分かりづらい&quot;&gt;各IDの型が分かりづらい&lt;/a&gt;&lt;/li&gt;
+            &lt;li&gt;&lt;a href=&quot;#delete-メソッドの引数の型チェックが弱い&quot;&gt;delete メソッドの引数の型チェックが弱い&lt;/a&gt;&lt;/li&gt;
+        &lt;/ul&gt;
+    &lt;/li&gt;
+    &lt;li&gt;&lt;a href=&quot;#そこで値オブジェクト&quot;&gt;そこで値オブジェクト&lt;/a&gt;&lt;/li&gt;
+    &lt;li&gt;&lt;a href=&quot;#さいごに&quot;&gt;さいごに&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h1 id=&quot;値オブジェクトを使わずプリミティブな型を使うとどうなるか&quot;&gt;値オブジェクトを使わず、プリミティブな型を使うとどうなるか&lt;/h1&gt;
+
+&lt;p&gt;ブログシステムを考えましょう。&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;ユーザーがいて、ユーザIDで区別する&lt;/li&gt;
+&lt;li&gt;記事があって、記事IDで区別するとします&lt;/li&gt;
+&lt;/ul&gt;
+
+
+&lt;p&gt;両方とも int だとします。&lt;/p&gt;
+
+&lt;pre class=&quot;code lang-php&quot; data-lang=&quot;php&quot; data-unlink&gt;&lt;span class=&quot;synSpecial&quot;&gt;&amp;lt;?php&lt;/span&gt;
+
+&lt;span class=&quot;synStatement&quot;&gt;$&lt;/span&gt;&lt;span class=&quot;synIdentifier&quot;&gt;userId&lt;/span&gt; &lt;span class=&quot;synStatement&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;synConstant&quot;&gt;1234&lt;/span&gt;;
+&lt;span class=&quot;synStatement&quot;&gt;$&lt;/span&gt;&lt;span class=&quot;synIdentifier&quot;&gt;articleId&lt;/span&gt; &lt;span class=&quot;synStatement&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;synConstant&quot;&gt;5678&lt;/span&gt;;
+&lt;/pre&gt;
+
+
+&lt;p&gt;&lt;code&gt;ArticleRepository&lt;/code&gt; があり、ブログ記事を削除する場合、こんな感じになります。&lt;/p&gt;
+
+&lt;pre class=&quot;code lang-php&quot; data-lang=&quot;php&quot; data-unlink&gt;&lt;span class=&quot;synSpecial&quot;&gt;&amp;lt;?php&lt;/span&gt;
+
+&lt;span class=&quot;synType&quot;&gt;class&lt;/span&gt; ArticleRepository 
+&lt;span class=&quot;synSpecial&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;synType&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;synPreProc&quot;&gt;function&lt;/span&gt; &lt;span class=&quot;synIdentifier&quot;&gt;delete&lt;/span&gt;&lt;span class=&quot;synSpecial&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;synType&quot;&gt;int&lt;/span&gt; &lt;span class=&quot;synStatement&quot;&gt;$&lt;/span&gt;&lt;span class=&quot;synIdentifier&quot;&gt;articleId&lt;/span&gt;&lt;span class=&quot;synSpecial&quot;&gt;)&lt;/span&gt;
+    &lt;span class=&quot;synSpecial&quot;&gt;{&lt;/span&gt;
+        &lt;span class=&quot;synComment&quot;&gt;// 記事を削除する処理&lt;/span&gt;
+    &lt;span class=&quot;synSpecial&quot;&gt;}&lt;/span&gt;
+&lt;span class=&quot;synSpecial&quot;&gt;}&lt;/span&gt;
+
+&lt;span class=&quot;synStatement&quot;&gt;$&lt;/span&gt;&lt;span class=&quot;synIdentifier&quot;&gt;userId&lt;/span&gt; &lt;span class=&quot;synStatement&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;synConstant&quot;&gt;1234&lt;/span&gt;;
+&lt;span class=&quot;synStatement&quot;&gt;$&lt;/span&gt;&lt;span class=&quot;synIdentifier&quot;&gt;articleId&lt;/span&gt; &lt;span class=&quot;synStatement&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;synConstant&quot;&gt;5678&lt;/span&gt;;
+
+&lt;span class=&quot;synComment&quot;&gt;/** &lt;/span&gt;&lt;span class=&quot;synPreProc&quot;&gt;@var &lt;/span&gt;&lt;span class=&quot;synComment&quot;&gt;ArticleRepository $articleRepository */&lt;/span&gt;
+&lt;span class=&quot;synStatement&quot;&gt;$&lt;/span&gt;&lt;span class=&quot;synIdentifier&quot;&gt;articleRepository&lt;/span&gt;&lt;span class=&quot;synType&quot;&gt;-&amp;gt;&lt;/span&gt;delete&lt;span class=&quot;synSpecial&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;synStatement&quot;&gt;$&lt;/span&gt;&lt;span class=&quot;synIdentifier&quot;&gt;articleId&lt;/span&gt;&lt;span class=&quot;synSpecial&quot;&gt;)&lt;/span&gt;;
+&lt;/pre&gt;
+
+
+&lt;p&gt;このコードにはどんな問題点があるでしょうか。&lt;/p&gt;
+
+&lt;h2 id=&quot;各IDの型が分かりづらい&quot;&gt;各IDの型が分かりづらい&lt;/h2&gt;
+
+&lt;p&gt;こういう事ができてしまいます。&lt;/p&gt;
+
+&lt;pre class=&quot;code lang-php&quot; data-lang=&quot;php&quot; data-unlink&gt;&lt;span class=&quot;synSpecial&quot;&gt;&amp;lt;?php&lt;/span&gt;
+
+&lt;span class=&quot;synStatement&quot;&gt;$&lt;/span&gt;&lt;span class=&quot;synIdentifier&quot;&gt;articleId&lt;/span&gt; &lt;span class=&quot;synStatement&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;synConstant&quot;&gt;&#39;abs1234&#39;&lt;/span&gt;;
+&lt;/pre&gt;
+
+
+&lt;p&gt;&lt;code&gt;$articleId&lt;/code&gt; の型定義がどこにもないからです。&lt;/p&gt;
+
+&lt;p&gt;&lt;code&gt;$articleRepository-&amp;gt;delete($articleId);&lt;/code&gt; を呼び出して初めて &lt;code&gt;int&lt;/code&gt; 型であることに気づくでしょう。&lt;/p&gt;
+
+&lt;h2 id=&quot;delete-メソッドの引数の型チェックが弱い&quot;&gt;delete メソッドの引数の型チェックが弱い&lt;/h2&gt;
+
+&lt;p&gt;こういうことが起こってしまいます。&lt;/p&gt;
+
+&lt;pre class=&quot;code lang-php&quot; data-lang=&quot;php&quot; data-unlink&gt;$userId = 1234;
+$articleId = 5678;
+
+/** &lt;span class=&quot;synPreProc&quot;&gt;@var &lt;/span&gt;ArticleRepository $articleRepository */
+$articleRepository-&lt;span class=&quot;synError&quot;&gt;&amp;gt;&lt;/span&gt;delete($userId);
+&lt;/pre&gt;
+
+
+&lt;p&gt;間違えて、deleteメソッドに userId を入れてしまっています。しかし、これはエラーにはなりません。代わりに、記事ID 1234 の記事が消えてしまいます。&lt;/p&gt;
+
+&lt;h1 id=&quot;そこで値オブジェクト&quot;&gt;そこで値オブジェクト&lt;/h1&gt;
+
+&lt;p&gt;値オブジェクト、英語では ValueObject と呼ばれるものを PHP で導入するとこうなります。&lt;/p&gt;
+
+&lt;pre class=&quot;code lang-php&quot; data-lang=&quot;php&quot; data-unlink&gt;&lt;span class=&quot;synSpecial&quot;&gt;&amp;lt;?php&lt;/span&gt;
+&lt;span class=&quot;synType&quot;&gt;class&lt;/span&gt; UserId
+&lt;span class=&quot;synSpecial&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;synComment&quot;&gt;/** &lt;/span&gt;&lt;span class=&quot;synPreProc&quot;&gt;@var &lt;/span&gt;&lt;span class=&quot;synComment&quot;&gt;int */&lt;/span&gt;
+    &lt;span class=&quot;synType&quot;&gt;private&lt;/span&gt; &lt;span class=&quot;synStatement&quot;&gt;$&lt;/span&gt;&lt;span class=&quot;synIdentifier&quot;&gt;value&lt;/span&gt;;
+    
+    &lt;span class=&quot;synType&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;synPreProc&quot;&gt;function&lt;/span&gt; &lt;span class=&quot;synStatement&quot;&gt;__construct&lt;/span&gt;&lt;span class=&quot;synSpecial&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;synType&quot;&gt;int&lt;/span&gt; &lt;span class=&quot;synStatement&quot;&gt;$&lt;/span&gt;&lt;span class=&quot;synIdentifier&quot;&gt;value&lt;/span&gt;&lt;span class=&quot;synSpecial&quot;&gt;)&lt;/span&gt;
+    &lt;span class=&quot;synSpecial&quot;&gt;{&lt;/span&gt;
+        &lt;span class=&quot;synStatement&quot;&gt;$&lt;/span&gt;&lt;span class=&quot;synIdentifier&quot;&gt;this&lt;/span&gt;&lt;span class=&quot;synType&quot;&gt;-&amp;gt;&lt;/span&gt;&lt;span class=&quot;synIdentifier&quot;&gt;value&lt;/span&gt; &lt;span class=&quot;synStatement&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;synStatement&quot;&gt;$&lt;/span&gt;&lt;span class=&quot;synIdentifier&quot;&gt;value&lt;/span&gt;;
+    &lt;span class=&quot;synSpecial&quot;&gt;}&lt;/span&gt;
+    
+    &lt;span class=&quot;synType&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;synPreProc&quot;&gt;function&lt;/span&gt; getValue&lt;span class=&quot;synSpecial&quot;&gt;()&lt;/span&gt;&lt;span class=&quot;synStatement&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;synType&quot;&gt;int&lt;/span&gt;
+    &lt;span class=&quot;synSpecial&quot;&gt;{&lt;/span&gt;
+        &lt;span class=&quot;synStatement&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;synStatement&quot;&gt;$&lt;/span&gt;&lt;span class=&quot;synIdentifier&quot;&gt;this&lt;/span&gt;&lt;span class=&quot;synType&quot;&gt;-&amp;gt;&lt;/span&gt;&lt;span class=&quot;synIdentifier&quot;&gt;value&lt;/span&gt;;
+    &lt;span class=&quot;synSpecial&quot;&gt;}&lt;/span&gt;
+&lt;span class=&quot;synSpecial&quot;&gt;}&lt;/span&gt;
+
+&lt;span class=&quot;synType&quot;&gt;class&lt;/span&gt; ArticleId
+&lt;span class=&quot;synSpecial&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;synComment&quot;&gt;/** &lt;/span&gt;&lt;span class=&quot;synPreProc&quot;&gt;@var &lt;/span&gt;&lt;span class=&quot;synComment&quot;&gt;int */&lt;/span&gt;
+    &lt;span class=&quot;synType&quot;&gt;private&lt;/span&gt; &lt;span class=&quot;synStatement&quot;&gt;$&lt;/span&gt;&lt;span class=&quot;synIdentifier&quot;&gt;value&lt;/span&gt;;
+
+    &lt;span class=&quot;synType&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;synPreProc&quot;&gt;function&lt;/span&gt; &lt;span class=&quot;synStatement&quot;&gt;__construct&lt;/span&gt;&lt;span class=&quot;synSpecial&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;synType&quot;&gt;int&lt;/span&gt; &lt;span class=&quot;synStatement&quot;&gt;$&lt;/span&gt;&lt;span class=&quot;synIdentifier&quot;&gt;value&lt;/span&gt;&lt;span class=&quot;synSpecial&quot;&gt;)&lt;/span&gt;
+    &lt;span class=&quot;synSpecial&quot;&gt;{&lt;/span&gt;
+        &lt;span class=&quot;synStatement&quot;&gt;$&lt;/span&gt;&lt;span class=&quot;synIdentifier&quot;&gt;this&lt;/span&gt;&lt;span class=&quot;synType&quot;&gt;-&amp;gt;&lt;/span&gt;&lt;span class=&quot;synIdentifier&quot;&gt;value&lt;/span&gt; &lt;span class=&quot;synStatement&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;synStatement&quot;&gt;$&lt;/span&gt;&lt;span class=&quot;synIdentifier&quot;&gt;value&lt;/span&gt;;
+    &lt;span class=&quot;synSpecial&quot;&gt;}&lt;/span&gt;
+
+    &lt;span class=&quot;synType&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;synPreProc&quot;&gt;function&lt;/span&gt; getValue&lt;span class=&quot;synSpecial&quot;&gt;()&lt;/span&gt;&lt;span class=&quot;synStatement&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;synType&quot;&gt;int&lt;/span&gt;
+    &lt;span class=&quot;synSpecial&quot;&gt;{&lt;/span&gt;
+        &lt;span class=&quot;synStatement&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;synStatement&quot;&gt;$&lt;/span&gt;&lt;span class=&quot;synIdentifier&quot;&gt;this&lt;/span&gt;&lt;span class=&quot;synType&quot;&gt;-&amp;gt;&lt;/span&gt;&lt;span class=&quot;synIdentifier&quot;&gt;value&lt;/span&gt;;
+    &lt;span class=&quot;synSpecial&quot;&gt;}&lt;/span&gt;
+&lt;span class=&quot;synSpecial&quot;&gt;}&lt;/span&gt;
+&lt;/pre&gt;
+
+
+&lt;p&gt;これを利用すると、先程までの実装はこうなります。&lt;/p&gt;
+
+&lt;pre class=&quot;code lang-php&quot; data-lang=&quot;php&quot; data-unlink&gt;&lt;span class=&quot;synSpecial&quot;&gt;&amp;lt;?php&lt;/span&gt;
+
+&lt;span class=&quot;synType&quot;&gt;class&lt;/span&gt; ArticleRepository 
+&lt;span class=&quot;synSpecial&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;synComment&quot;&gt;// 型の制約が強くなる&lt;/span&gt;
+    &lt;span class=&quot;synType&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;synPreProc&quot;&gt;function&lt;/span&gt; &lt;span class=&quot;synIdentifier&quot;&gt;delete&lt;/span&gt;&lt;span class=&quot;synSpecial&quot;&gt;(&lt;/span&gt;ArticleId &lt;span class=&quot;synStatement&quot;&gt;$&lt;/span&gt;&lt;span class=&quot;synIdentifier&quot;&gt;articleId&lt;/span&gt;&lt;span class=&quot;synSpecial&quot;&gt;)&lt;/span&gt;
+    &lt;span class=&quot;synSpecial&quot;&gt;{&lt;/span&gt;
+        &lt;span class=&quot;synComment&quot;&gt;// 記事を削除する処理&lt;/span&gt;
+    &lt;span class=&quot;synSpecial&quot;&gt;}&lt;/span&gt;
+&lt;span class=&quot;synSpecial&quot;&gt;}&lt;/span&gt;
+
+&lt;span class=&quot;synStatement&quot;&gt;$&lt;/span&gt;&lt;span class=&quot;synIdentifier&quot;&gt;userId&lt;/span&gt; &lt;span class=&quot;synStatement&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;synPreProc&quot;&gt;new&lt;/span&gt; UserId&lt;span class=&quot;synSpecial&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;synConstant&quot;&gt;1234&lt;/span&gt;&lt;span class=&quot;synSpecial&quot;&gt;)&lt;/span&gt;;
+&lt;span class=&quot;synStatement&quot;&gt;$&lt;/span&gt;&lt;span class=&quot;synIdentifier&quot;&gt;articleId&lt;/span&gt; &lt;span class=&quot;synStatement&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;synPreProc&quot;&gt;new&lt;/span&gt; ArticleId&lt;span class=&quot;synSpecial&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;synConstant&quot;&gt;5678&lt;/span&gt;&lt;span class=&quot;synSpecial&quot;&gt;)&lt;/span&gt;;
+
+&lt;span class=&quot;synComment&quot;&gt;/** &lt;/span&gt;&lt;span class=&quot;synPreProc&quot;&gt;@var &lt;/span&gt;&lt;span class=&quot;synComment&quot;&gt;ArticleRepository $articleRepository */&lt;/span&gt;
+&lt;span class=&quot;synStatement&quot;&gt;$&lt;/span&gt;&lt;span class=&quot;synIdentifier&quot;&gt;articleRepository&lt;/span&gt;&lt;span class=&quot;synType&quot;&gt;-&amp;gt;&lt;/span&gt;delete&lt;span class=&quot;synSpecial&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;synStatement&quot;&gt;$&lt;/span&gt;&lt;span class=&quot;synIdentifier&quot;&gt;articleId&lt;/span&gt;&lt;span class=&quot;synSpecial&quot;&gt;)&lt;/span&gt;;
+&lt;/pre&gt;
+
+
+&lt;p&gt;これで、&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;userId は int であることが UserId クラスに定義されます
+
+&lt;ul&gt;
+&lt;li&gt;他に制約がある場合（マイナスの値はNG等）、ここに追加できます。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;userId と articleId を取り違えて &lt;code&gt;articleRepository&lt;/code&gt; に渡すことはなくなります&lt;/li&gt;
+&lt;/ul&gt;
+
+
+&lt;h1 id=&quot;さいごに&quot;&gt;さいごに&lt;/h1&gt;
+
+&lt;p&gt;他にも値オブジェクトのありがたい点は色々あります。&lt;/p&gt;
+
+&lt;p&gt;以下の本が非常によくまとまっているので、読んでみてください。&lt;/p&gt;
+
+&lt;p&gt;&lt;div class=&quot;hatena-asin-detail&quot;&gt;&lt;a href=&quot;https://www.amazon.co.jp/exec/obidos/ASIN/479815072X/yoshikiutakat-22/&quot; class=&quot;hatena-asin-detail-image-link&quot; target=&quot;_blank&quot; rel=&quot;noopener&quot;&gt;&lt;img src=&quot;https://m.media-amazon.com/images/I/51E+hPktiQL._SL500_.jpg&quot; class=&quot;hatena-asin-detail-image&quot; alt=&quot;ドメイン駆動設計入門 ボトムアップでわかる! ドメイン駆動設計の基本&quot; title=&quot;ドメイン駆動設計入門 ボトムアップでわかる! ドメイン駆動設計の基本&quot;&gt;&lt;/a&gt;&lt;div class=&quot;hatena-asin-detail-info&quot;&gt;&lt;p class=&quot;hatena-asin-detail-title&quot;&gt;&lt;a href=&quot;https://www.amazon.co.jp/exec/obidos/ASIN/479815072X/yoshikiutakat-22/&quot; target=&quot;_blank&quot; rel=&quot;noopener&quot;&gt;ドメイン駆動設計入門 ボトムアップでわかる! ドメイン駆動設計の基本&lt;/a&gt;&lt;/p&gt;&lt;ul class=&quot;hatena-asin-detail-meta&quot;&gt;&lt;li&gt;&lt;span class=&quot;hatena-asin-detail-label&quot;&gt;作者:&lt;/span&gt;&lt;a href=&quot;http://d.hatena.ne.jp/keyword/%C0%AE%C0%A5%20%B0%F4%C0%EB&quot; class=&quot;keyword&quot;&gt;成瀬 允宣&lt;/a&gt;&lt;/li&gt;&lt;li&gt;翔泳社&lt;/li&gt;&lt;/ul&gt;&lt;a href=&quot;https://www.amazon.co.jp/exec/obidos/ASIN/479815072X/yoshikiutakat-22/&quot; class=&quot;asin-detail-buy&quot; target=&quot;_blank&quot; rel=&quot;noopener&quot;&gt;Amazon&lt;/a&gt;&lt;/div&gt;&lt;/div&gt;&lt;/p&gt;
+</description>          <pubDate>Mon, 07 Jun 2021 07:00:00 +0900</pubDate>
+          <guid isPermalink="false">hatenablog://entry/26006613771959496</guid>
+          
+            <category>PHP</category>
+          
+            <category>ドメイン駆動設計（DDD）</category>
+          
+            <category>プログラミング・開発</category>
+          
+            <category>本・読書</category>
+          
+          <enclosure url="https://m.media-amazon.com/images/I/51E+hPktiQL._SL500_.jpg" type="image/jpeg" length="0" />
+        </item>
+      
+    
+      
+      
+        <item>
+          <title>現場のエンジニアにとっては理解しやすい本「ボトムアップのDDD」おすすめです</title>
+          <link>https://www.utakata.work/entry/2021/06/04/103833</link>          <description>&lt;ul class=&quot;table-of-contents&quot;&gt;
+    &lt;li&gt;&lt;a href=&quot;#書籍ドメイン駆動設計入門-ボトムアップでわかるドメイン駆動設計の基本&quot;&gt;書籍『ドメイン駆動設計入門 ボトムアップでわかる！ドメイン駆動設計の基本』&lt;/a&gt;&lt;/li&gt;
+    &lt;li&gt;&lt;a href=&quot;#なぜ今までのDDD本ばわかりづらかったのか&quot;&gt;なぜ今までのDDD本ばわかりづらかったのか&lt;/a&gt;&lt;/li&gt;
+    &lt;li&gt;&lt;a href=&quot;#ボトムアップになるとどうなるのか&quot;&gt;ボトムアップになるとどうなるのか&lt;/a&gt;&lt;/li&gt;
+    &lt;li&gt;&lt;a href=&quot;#ここ数年で一番おすすめの本&quot;&gt;ここ数年で一番おすすめの本&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h1 id=&quot;書籍ドメイン駆動設計入門-ボトムアップでわかるドメイン駆動設計の基本&quot;&gt;書籍『ドメイン駆動設計入門 ボトムアップでわかる！ドメイン駆動設計の基本』&lt;/h1&gt;
+
+&lt;p&gt;正式な本のタイトルは『ドメイン駆動設計入門 ボトムアップでわかる！ドメイン駆動設計の基本』&lt;/p&gt;
+
+&lt;p&gt;ずっと気になったのですが、ついに読み始めました。&lt;/p&gt;
+
+&lt;p&gt;&lt;div class=&quot;hatena-asin-detail&quot;&gt;&lt;a href=&quot;https://www.amazon.co.jp/exec/obidos/ASIN/479815072X/yoshikiutakat-22/&quot; class=&quot;hatena-asin-detail-image-link&quot; target=&quot;_blank&quot; rel=&quot;noopener&quot;&gt;&lt;img src=&quot;https://m.media-amazon.com/images/I/51E+hPktiQL._SL500_.jpg&quot; class=&quot;hatena-asin-detail-image&quot; alt=&quot;ドメイン駆動設計入門 ボトムアップでわかる! ドメイン駆動設計の基本&quot; title=&quot;ドメイン駆動設計入門 ボトムアップでわかる! ドメイン駆動設計の基本&quot;&gt;&lt;/a&gt;&lt;div class=&quot;hatena-asin-detail-info&quot;&gt;&lt;p class=&quot;hatena-asin-detail-title&quot;&gt;&lt;a href=&quot;https://www.amazon.co.jp/exec/obidos/ASIN/479815072X/yoshikiutakat-22/&quot; target=&quot;_blank&quot; rel=&quot;noopener&quot;&gt;ドメイン駆動設計入門 ボトムアップでわかる! ドメイン駆動設計の基本&lt;/a&gt;&lt;/p&gt;&lt;ul class=&quot;hatena-asin-detail-meta&quot;&gt;&lt;li&gt;&lt;span class=&quot;hatena-asin-detail-label&quot;&gt;作者:&lt;/span&gt;&lt;a href=&quot;http://d.hatena.ne.jp/keyword/%C0%AE%C0%A5%20%B0%F4%C0%EB&quot; class=&quot;keyword&quot;&gt;成瀬 允宣&lt;/a&gt;&lt;/li&gt;&lt;li&gt;翔泳社&lt;/li&gt;&lt;/ul&gt;&lt;a href=&quot;https://www.amazon.co.jp/exec/obidos/ASIN/479815072X/yoshikiutakat-22/&quot; class=&quot;asin-detail-buy&quot; target=&quot;_blank&quot; rel=&quot;noopener&quot;&gt;Amazon&lt;/a&gt;&lt;/div&gt;&lt;/div&gt;&lt;/p&gt;
+
+&lt;p&gt;読んで&lt;span style=&quot;color: #0000cc&quot;&gt;&lt;b&gt;「これが本当に欲しかったDDDの本だ」&lt;/b&gt;&lt;/span&gt;となりました。&lt;/p&gt;
+
+&lt;h1 id=&quot;なぜ今までのDDD本ばわかりづらかったのか&quot;&gt;なぜ今までのDDD本ばわかりづらかったのか&lt;/h1&gt;
+
+&lt;p&gt;DDD、いわゆるドメイン駆動設計（Domain Driven Development）の本は、ずっと、わかりづらい、わかりづらい、と言われてきました。&lt;/p&gt;
+
+&lt;p&gt;何故分かりづらいのか、それは&lt;span style=&quot;color: #dd830c&quot;&gt;&lt;b&gt;「トップダウン」&lt;/b&gt;&lt;/span&gt;だったからです。&lt;/p&gt;
+
+&lt;p&gt;&lt;b&gt;DDDとはどういうものなのか → 実際にどう実装するのか、という順序で書かれているのがトップダウンです。&lt;/b&gt;&lt;/p&gt;
+
+&lt;p&gt;この順序で書くと、「DDDとはどういうものなのか」の部分が長くなりがちで、かつ抽象的なので、難しい印象を与えがちです。&lt;/p&gt;
+
+&lt;h1 id=&quot;ボトムアップになるとどうなるのか&quot;&gt;ボトムアップになるとどうなるのか&lt;/h1&gt;
+
+&lt;p&gt;この本は、&lt;span style=&quot;color: #0000cc&quot;&gt;&lt;b&gt;DDDでよく使われる実装パターンから解説が始まります。&lt;/b&gt;&lt;/span&gt;&lt;/p&gt;
+
+&lt;p&gt;例えば、 ValueObject、Entity、Repository など。&lt;/p&gt;
+
+&lt;p&gt;&lt;b&gt;実際の実装から説明する、そして、なぜこれらの実装が優れているのか、を説明する&lt;/b&gt;ので、現場のエンジニアにとっては、すっと入ってきます。しかも、すぐ使えます。&lt;/p&gt;
+
+&lt;p&gt;読み進めるうちに、徐々に複雑な実装パターンになっていき、最後にDDD特有の「ユビキタス言語」などの話になります。&lt;/p&gt;
+
+&lt;p&gt;&lt;b&gt;最初に簡単な内容、最後に難しい内容&lt;/b&gt;が書いてあるので、読めるところまで読めば良いのです。&lt;/p&gt;
+
+&lt;h1 id=&quot;ここ数年で一番おすすめの本&quot;&gt;ここ数年で一番おすすめの本&lt;/h1&gt;
+
+&lt;p&gt;DDD は、最近大きな注目を集めています。DDD とは、当たり前のことを当たり前に実装するための技術です。&lt;/p&gt;
+
+&lt;p&gt;それも含めて、この本は、ここ数年で一番オススメの本かもしれないので、ぜひ読んでみてください。&lt;/p&gt;
+
+&lt;p&gt;&lt;div class=&quot;hatena-asin-detail&quot;&gt;&lt;a href=&quot;https://www.amazon.co.jp/exec/obidos/ASIN/479815072X/yoshikiutakat-22/&quot; class=&quot;hatena-asin-detail-image-link&quot; target=&quot;_blank&quot; rel=&quot;noopener&quot;&gt;&lt;img src=&quot;https://m.media-amazon.com/images/I/51E+hPktiQL._SL500_.jpg&quot; class=&quot;hatena-asin-detail-image&quot; alt=&quot;ドメイン駆動設計入門 ボトムアップでわかる! ドメイン駆動設計の基本&quot; title=&quot;ドメイン駆動設計入門 ボトムアップでわかる! ドメイン駆動設計の基本&quot;&gt;&lt;/a&gt;&lt;div class=&quot;hatena-asin-detail-info&quot;&gt;&lt;p class=&quot;hatena-asin-detail-title&quot;&gt;&lt;a href=&quot;https://www.amazon.co.jp/exec/obidos/ASIN/479815072X/yoshikiutakat-22/&quot; target=&quot;_blank&quot; rel=&quot;noopener&quot;&gt;ドメイン駆動設計入門 ボトムアップでわかる! ドメイン駆動設計の基本&lt;/a&gt;&lt;/p&gt;&lt;ul class=&quot;hatena-asin-detail-meta&quot;&gt;&lt;li&gt;&lt;span class=&quot;hatena-asin-detail-label&quot;&gt;作者:&lt;/span&gt;&lt;a href=&quot;http://d.hatena.ne.jp/keyword/%C0%AE%C0%A5%20%B0%F4%C0%EB&quot; class=&quot;keyword&quot;&gt;成瀬 允宣&lt;/a&gt;&lt;/li&gt;&lt;li&gt;翔泳社&lt;/li&gt;&lt;/ul&gt;&lt;a href=&quot;https://www.amazon.co.jp/exec/obidos/ASIN/479815072X/yoshikiutakat-22/&quot; class=&quot;asin-detail-buy&quot; target=&quot;_blank&quot; rel=&quot;noopener&quot;&gt;Amazon&lt;/a&gt;&lt;/div&gt;&lt;/div&gt;&lt;/p&gt;
+</description>          <pubDate>Fri, 04 Jun 2021 10:38:33 +0900</pubDate>
+          <guid isPermalink="false">hatenablog://entry/26006613771952018</guid>
+          
+            <category>ドメイン駆動設計（DDD）</category>
+          
+            <category>プログラミング・開発</category>
+          
+            <category>本・読書</category>
+          
+          <enclosure url="https://m.media-amazon.com/images/I/51E+hPktiQL._SL500_.jpg" type="image/jpeg" length="0" />
+        </item>
+      
+    
+      
+      
+        <item>
+          <title>本『最軽量のマネジメント』、途中経過も公開、給与交渉も公開</title>
+          <link>https://www.utakata.work/entry/books/management</link>          <description>&lt;ul class=&quot;table-of-contents&quot;&gt;
+    &lt;li&gt;&lt;a href=&quot;#マネージャーになった&quot;&gt;マネージャーになった&lt;/a&gt;&lt;/li&gt;
+    &lt;li&gt;&lt;a href=&quot;#マネージャーのやることを減らしていく本&quot;&gt;マネージャーのやることを減らしていく本&lt;/a&gt;&lt;/li&gt;
+    &lt;li&gt;&lt;a href=&quot;#3行で説明すると&quot;&gt;3行で説明すると&lt;/a&gt;&lt;/li&gt;
+    &lt;li&gt;&lt;a href=&quot;#個人的に参考になった気になった部分&quot;&gt;個人的に参考になった・気になった部分&lt;/a&gt;&lt;ul&gt;
+            &lt;li&gt;&lt;a href=&quot;#ザツダンですべきこと&quot;&gt;「ザツダン」ですべきこと&lt;/a&gt;&lt;/li&gt;
+            &lt;li&gt;&lt;a href=&quot;#徹底的な公開特に途中経過の公開&quot;&gt;徹底的な公開、特に「途中経過」の公開&lt;/a&gt;&lt;/li&gt;
+            &lt;li&gt;&lt;a href=&quot;#社員が160人の時の話&quot;&gt;社員が160人の時の話&lt;/a&gt;&lt;/li&gt;
+            &lt;li&gt;&lt;a href=&quot;#その他書いてあったこと&quot;&gt;その他書いてあったこと&lt;/a&gt;&lt;/li&gt;
+            &lt;li&gt;&lt;a href=&quot;#書いてなかったけど気になった点&quot;&gt;書いてなかったけど気になった点&lt;/a&gt;&lt;/li&gt;
+        &lt;/ul&gt;
+    &lt;/li&gt;
+    &lt;li&gt;&lt;a href=&quot;#まるボウズ日記&quot;&gt;まるボウズ日記&lt;/a&gt;&lt;ul&gt;
+            &lt;li&gt;&lt;a href=&quot;#質問責任と説明責任&quot;&gt;質問責任と説明責任&lt;/a&gt;&lt;/li&gt;
+            &lt;li&gt;&lt;a href=&quot;#給与交渉について&quot;&gt;給与交渉について&lt;/a&gt;&lt;/li&gt;
+        &lt;/ul&gt;
+    &lt;/li&gt;
+    &lt;li&gt;&lt;a href=&quot;#感想&quot;&gt;感想&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h1 id=&quot;マネージャーになった&quot;&gt;マネージャーになった&lt;/h1&gt;
+
+&lt;p&gt;2021年3月からマネージャーになったので、以前から気になっていた本『最軽量のマネジメント』を読みましたので、感想を書きます。&lt;/p&gt;
+
+&lt;p&gt;&lt;div class=&quot;hatena-asin-detail&quot;&gt;&lt;a href=&quot;https://www.amazon.co.jp/exec/obidos/ASIN/B07Z94K6ZW/yoshikiutakat-22/&quot; class=&quot;hatena-asin-detail-image-link&quot; target=&quot;_blank&quot; rel=&quot;noopener&quot;&gt;&lt;img src=&quot;https://m.media-amazon.com/images/I/51iBww3Wx9L._SL500_.jpg&quot; class=&quot;hatena-asin-detail-image&quot; alt=&quot;最軽量のマネジメント(サイボウズ式ブックス)&quot; title=&quot;最軽量のマネジメント(サイボウズ式ブックス)&quot;&gt;&lt;/a&gt;&lt;div class=&quot;hatena-asin-detail-info&quot;&gt;&lt;p class=&quot;hatena-asin-detail-title&quot;&gt;&lt;a href=&quot;https://www.amazon.co.jp/exec/obidos/ASIN/B07Z94K6ZW/yoshikiutakat-22/&quot; target=&quot;_blank&quot; rel=&quot;noopener&quot;&gt;最軽量のマネジメント(サイボウズ式ブックス)&lt;/a&gt;&lt;/p&gt;&lt;ul class=&quot;hatena-asin-detail-meta&quot;&gt;&lt;li&gt;&lt;span class=&quot;hatena-asin-detail-label&quot;&gt;作者:&lt;/span&gt;&lt;a href=&quot;http://d.hatena.ne.jp/keyword/%BB%B3%C5%C4%CD%FD&quot; class=&quot;keyword&quot;&gt;山田理&lt;/a&gt;&lt;/li&gt;&lt;li&gt;ライツ社&lt;/li&gt;&lt;/ul&gt;&lt;a href=&quot;https://www.amazon.co.jp/exec/obidos/ASIN/B07Z94K6ZW/yoshikiutakat-22/&quot; class=&quot;asin-detail-buy&quot; target=&quot;_blank&quot; rel=&quot;noopener&quot;&gt;Amazon&lt;/a&gt;&lt;/div&gt;&lt;/div&gt;&lt;/p&gt;
+
+&lt;h1 id=&quot;マネージャーのやることを減らしていく本&quot;&gt;マネージャーのやることを減らしていく本&lt;/h1&gt;
+
+&lt;p&gt;マネージャーになると、仕事が増えて大変になります。働き方改革で更にマネージャーの負担は増えています。&lt;/p&gt;
+
+&lt;p&gt;その負担を減らすのに必要なことは何なのか。といった内容の本です。&lt;/p&gt;
+
+&lt;h1 id=&quot;3行で説明すると&quot;&gt;3行で説明すると&lt;/h1&gt;
+
+&lt;ul&gt;
+&lt;li&gt;メンバーとの「ザツダン」&lt;/li&gt;
+&lt;li&gt;徹底的に情報公開&lt;/li&gt;
+&lt;li&gt;「説明責任」と「質問責任」&lt;/li&gt;
+&lt;/ul&gt;
+
+
+&lt;p&gt;です。&lt;/p&gt;
+
+&lt;p&gt;全部の詳細は書けないので、気になった人は本を読んでみてください。&lt;/p&gt;
+
+&lt;p&gt;&lt;div class=&quot;hatena-asin-detail&quot;&gt;&lt;a href=&quot;https://www.amazon.co.jp/exec/obidos/ASIN/B07Z94K6ZW/yoshikiutakat-22/&quot; class=&quot;hatena-asin-detail-image-link&quot; target=&quot;_blank&quot; rel=&quot;noopener&quot;&gt;&lt;img src=&quot;https://m.media-amazon.com/images/I/51iBww3Wx9L._SL500_.jpg&quot; class=&quot;hatena-asin-detail-image&quot; alt=&quot;最軽量のマネジメント(サイボウズ式ブックス)&quot; title=&quot;最軽量のマネジメント(サイボウズ式ブックス)&quot;&gt;&lt;/a&gt;&lt;div class=&quot;hatena-asin-detail-info&quot;&gt;&lt;p class=&quot;hatena-asin-detail-title&quot;&gt;&lt;a href=&quot;https://www.amazon.co.jp/exec/obidos/ASIN/B07Z94K6ZW/yoshikiutakat-22/&quot; target=&quot;_blank&quot; rel=&quot;noopener&quot;&gt;最軽量のマネジメント(サイボウズ式ブックス)&lt;/a&gt;&lt;/p&gt;&lt;ul class=&quot;hatena-asin-detail-meta&quot;&gt;&lt;li&gt;&lt;span class=&quot;hatena-asin-detail-label&quot;&gt;作者:&lt;/span&gt;&lt;a href=&quot;http://d.hatena.ne.jp/keyword/%BB%B3%C5%C4%CD%FD&quot; class=&quot;keyword&quot;&gt;山田理&lt;/a&gt;&lt;/li&gt;&lt;li&gt;ライツ社&lt;/li&gt;&lt;/ul&gt;&lt;a href=&quot;https://www.amazon.co.jp/exec/obidos/ASIN/B07Z94K6ZW/yoshikiutakat-22/&quot; class=&quot;asin-detail-buy&quot; target=&quot;_blank&quot; rel=&quot;noopener&quot;&gt;Amazon&lt;/a&gt;&lt;/div&gt;&lt;/div&gt;&lt;/p&gt;
+
+&lt;h1 id=&quot;個人的に参考になった気になった部分&quot;&gt;個人的に参考になった・気になった部分&lt;/h1&gt;
+
+&lt;p&gt;本の内容のうち、個人的に気になった部分だけ書いていきます。&lt;/p&gt;
+
+&lt;h2 id=&quot;ザツダンですべきこと&quot;&gt;「ザツダン」ですべきこと&lt;/h2&gt;
+
+&lt;p&gt;最近は「1on1」という言葉をよく耳にするようになりました。部下と1対1で、週1回〜月1回くらいの頻度で、お話をする会です。&lt;/p&gt;
+
+&lt;p&gt;僕がマネージャーになる前、所属していた部署では、1on1 という仕組みはありませんでした。そこで、僕は個人的に「マネージャーと月1回くらいの頻度で1対1で話そう」と決めていました。&lt;/p&gt;
+
+&lt;p&gt;これはかなり効果があったと思っています。自分が何を期待されているかわかり、モチベーションも上がりましたし、逆に自分の要望をマネージャーに伝える機会にもなっていました。&lt;/p&gt;
+
+&lt;p&gt;しかし、この本で出てくる「ザツダン」とは、1on1よりももっと雑談とのことです。&lt;/p&gt;
+
+&lt;p&gt;目的は、社員が抱えている「モヤモヤ」の解決。&lt;/p&gt;
+
+&lt;p&gt;必勝テクのようなものは無く、とにかく根気よくやって、不満が出てきたら解決する、ということのようです。&lt;/p&gt;
+
+&lt;h2 id=&quot;徹底的な公開特に途中経過の公開&quot;&gt;徹底的な公開、特に「途中経過」の公開&lt;/h2&gt;
+
+&lt;p&gt;途中経過を公開すると、混乱するんじゃないかと考える人も多いと思います。&lt;/p&gt;
+
+&lt;p&gt;「こういう事やるかも」と言っておきつつ、「やっぱやらない」みたいな。&lt;/p&gt;
+
+&lt;p&gt;しかし、公開することで、メンバーから早いうちに意見がもらえて、巻戻りのリスクが減ったりします。&lt;/p&gt;
+
+&lt;p&gt;現場が混乱するリスクよりも、リターンの方が大きいのでは、ということでした。&lt;/p&gt;
+
+&lt;p&gt;他にも、経費精算の内容が全部公開されていたり、社員個人の目標が公開されていたり。&lt;/p&gt;
+
+&lt;p&gt;給与交渉の過程を公開してしまった人もいる&lt;/p&gt;
+
+&lt;p&gt;&lt;iframe src=&quot;https://hatenablog-parts.com/embed?url=https%3A%2F%2Fcybozushiki.cybozu.co.jp%2Farticles%2Fm001467.html&quot; title=&quot;「私の年収、低すぎ？」で終わらせない──給与交渉を隠さず公開、14%給与が上がったエンジニアの話 | サイボウズ式&quot; class=&quot;embed-card embed-webcard&quot; scrolling=&quot;no&quot; frameborder=&quot;0&quot; style=&quot;display: block; width: 100%; height: 155px; max-width: 500px; margin: 10px 0px;&quot;&gt;&lt;/iframe&gt;&lt;cite class=&quot;hatena-citation&quot;&gt;&lt;a href=&quot;https://cybozushiki.cybozu.co.jp/articles/m001467.html&quot;&gt;cybozushiki.cybozu.co.jp&lt;/a&gt;&lt;/cite&gt;&lt;/p&gt;
+
+&lt;h2 id=&quot;社員が160人の時の話&quot;&gt;社員が160人の時の話&lt;/h2&gt;
+
+&lt;p&gt;ちなみに、これらの対応をしたのは、社員が160人くらいの時でした。今のサイボウズの社員は800人くらいとのこと。&lt;/p&gt;
+
+&lt;p&gt;社員160人だとできたけど、800人だとできない、みたいなこともありそうで、このへんは組織規模によって対応内容も多少は変わるかもな、と僕は感じた。&lt;/p&gt;
+
+&lt;h2 id=&quot;その他書いてあったこと&quot;&gt;その他書いてあったこと&lt;/h2&gt;
+
+&lt;ul&gt;
+&lt;li&gt;部署ごとの独立採算制のデメリット&lt;/li&gt;
+&lt;li&gt;数字が伸びているうちは悪いところに目がいかない&lt;/li&gt;
+&lt;li&gt;組織の階層が深いとレポートラインが機能しない&lt;/li&gt;
+&lt;li&gt;ピラミッド型組織ではなくキャンプファイヤー型組織（オニオンアーキテクチャみたいだなって思った）&lt;/li&gt;
+&lt;li&gt;情報公開は、エンジニアのOSSにつながる。エンジニアリングの発展が早いのは、このOSS文化にある。&lt;/li&gt;
+&lt;li&gt;みんなびっくりするほど寝坊している
+
+&lt;ul&gt;
+&lt;li&gt;寝坊しても怒られないのでちゃんと報告しているのかな&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+
+
+&lt;h2 id=&quot;書いてなかったけど気になった点&quot;&gt;書いてなかったけど気になった点&lt;/h2&gt;
+
+&lt;p&gt;100人100通りの働き方の話があったが、例えば「そもそもこの人サイボウズに合わないな」と思ったり、「働くのに向かないな」という人はどうなるのだろうか。&lt;/p&gt;
+
+&lt;p&gt;100人100通りの働き方の考え方は正しいと思うが、それでなかなか成果が出せない人とか、そもそもちゃんと仕事する気が無い人とかいないのかな。&lt;/p&gt;
+
+&lt;h1 id=&quot;まるボウズ日記&quot;&gt;まるボウズ日記&lt;/h1&gt;
+
+&lt;p&gt;著者の山田さんが書いているまるボウズ日記というのがある。本に登場してくるような内容もいくつか書いてある。&lt;/p&gt;
+
+&lt;p&gt;&lt;iframe src=&quot;https://hatenablog-parts.com/embed?url=https%3A%2F%2Fcybozushiki.cybozu.co.jp%2Fdisabled%2Fmarubozu.html&quot; title=&quot;まるボウズ日記 | 記事一覧  | サイボウズ式&quot; class=&quot;embed-card embed-webcard&quot; scrolling=&quot;no&quot; frameborder=&quot;0&quot; style=&quot;display: block; width: 100%; height: 155px; max-width: 500px; margin: 10px 0px;&quot;&gt;&lt;/iframe&gt;&lt;cite class=&quot;hatena-citation&quot;&gt;&lt;a href=&quot;https://cybozushiki.cybozu.co.jp/disabled/marubozu.html&quot;&gt;cybozushiki.cybozu.co.jp&lt;/a&gt;&lt;/cite&gt;&lt;/p&gt;
+
+&lt;h2 id=&quot;質問責任と説明責任&quot;&gt;質問責任と説明責任&lt;/h2&gt;
+
+&lt;p&gt;&lt;iframe src=&quot;https://hatenablog-parts.com/embed?url=https%3A%2F%2Fcybozushiki.cybozu.co.jp%2Farticles%2Fm001266.html&quot; title=&quot;理不尽を受け入れること──質問責任と説明責任が大事 | サイボウズ式&quot; class=&quot;embed-card embed-webcard&quot; scrolling=&quot;no&quot; frameborder=&quot;0&quot; style=&quot;display: block; width: 100%; height: 155px; max-width: 500px; margin: 10px 0px;&quot;&gt;&lt;/iframe&gt;&lt;cite class=&quot;hatena-citation&quot;&gt;&lt;a href=&quot;https://cybozushiki.cybozu.co.jp/articles/m001266.html&quot;&gt;cybozushiki.cybozu.co.jp&lt;/a&gt;&lt;/cite&gt;&lt;/p&gt;
+
+&lt;h2 id=&quot;給与交渉について&quot;&gt;給与交渉について&lt;/h2&gt;
+
+&lt;p&gt;&lt;iframe src=&quot;https://hatenablog-parts.com/embed?url=https%3A%2F%2Fcybozushiki.cybozu.co.jp%2Farticles%2Fm001020.html&quot; title=&quot;サイボウズの給料は「あなたが転職したらいくら？」で決めています | サイボウズ式&quot; class=&quot;embed-card embed-webcard&quot; scrolling=&quot;no&quot; frameborder=&quot;0&quot; style=&quot;display: block; width: 100%; height: 155px; max-width: 500px; margin: 10px 0px;&quot;&gt;&lt;/iframe&gt;&lt;cite class=&quot;hatena-citation&quot;&gt;&lt;a href=&quot;https://cybozushiki.cybozu.co.jp/articles/m001020.html&quot;&gt;cybozushiki.cybozu.co.jp&lt;/a&gt;&lt;/cite&gt;&lt;/p&gt;
+
+&lt;h1 id=&quot;感想&quot;&gt;感想&lt;/h1&gt;
+
+&lt;p&gt;参考になることはかなりあった。&lt;/p&gt;
+
+&lt;p&gt;組織的にやらなくても、個人でできることも含まれている。&lt;/p&gt;
+
+&lt;p&gt;また、部下にこの本を読ませてもよいかもしれない、とのこと。&lt;/p&gt;
+
+&lt;p&gt;&lt;div class=&quot;hatena-asin-detail&quot;&gt;&lt;a href=&quot;https://www.amazon.co.jp/exec/obidos/ASIN/B07Z94K6ZW/yoshikiutakat-22/&quot; class=&quot;hatena-asin-detail-image-link&quot; target=&quot;_blank&quot; rel=&quot;noopener&quot;&gt;&lt;img src=&quot;https://m.media-amazon.com/images/I/51iBww3Wx9L._SL500_.jpg&quot; class=&quot;hatena-asin-detail-image&quot; alt=&quot;最軽量のマネジメント(サイボウズ式ブックス)&quot; title=&quot;最軽量のマネジメント(サイボウズ式ブックス)&quot;&gt;&lt;/a&gt;&lt;div class=&quot;hatena-asin-detail-info&quot;&gt;&lt;p class=&quot;hatena-asin-detail-title&quot;&gt;&lt;a href=&quot;https://www.amazon.co.jp/exec/obidos/ASIN/B07Z94K6ZW/yoshikiutakat-22/&quot; target=&quot;_blank&quot; rel=&quot;noopener&quot;&gt;最軽量のマネジメント(サイボウズ式ブックス)&lt;/a&gt;&lt;/p&gt;&lt;ul class=&quot;hatena-asin-detail-meta&quot;&gt;&lt;li&gt;&lt;span class=&quot;hatena-asin-detail-label&quot;&gt;作者:&lt;/span&gt;&lt;a href=&quot;http://d.hatena.ne.jp/keyword/%BB%B3%C5%C4%CD%FD&quot; class=&quot;keyword&quot;&gt;山田理&lt;/a&gt;&lt;/li&gt;&lt;li&gt;ライツ社&lt;/li&gt;&lt;/ul&gt;&lt;a href=&quot;https://www.amazon.co.jp/exec/obidos/ASIN/B07Z94K6ZW/yoshikiutakat-22/&quot; class=&quot;asin-detail-buy&quot; target=&quot;_blank&quot; rel=&quot;noopener&quot;&gt;Amazon&lt;/a&gt;&lt;/div&gt;&lt;/div&gt;&lt;/p&gt;
+</description>          <pubDate>Mon, 31 May 2021 07:00:00 +0900</pubDate>
+          <guid isPermalink="false">hatenablog://entry/26006613769638956</guid>
+          
+            <category>ライフハック</category>
+          
+            <category>本・読書</category>
+          
+          <enclosure url="https://m.media-amazon.com/images/I/51iBww3Wx9L._SL500_.jpg" type="image/jpeg" length="0" />
+        </item>
+      
+    
+      
+      
+        <item>
+          <title>これまで僕が仕事で使ったWebフレームワークと言語の特徴</title>
+          <link>https://www.utakata.work/entry/web-frameworks</link>          <description>&lt;p&gt;これまで僕が業務で触ったことあるフレームワーク（と言語）は&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;Laravel (PHP)&lt;/li&gt;
+&lt;li&gt;Slim Framework (PHP)&lt;/li&gt;
+&lt;li&gt;Django (Python)&lt;/li&gt;
+&lt;li&gt;Gin (Go言語)&lt;/li&gt;
+&lt;/ul&gt;
+
+
+&lt;p&gt;で、どれも1年以上は保守しています。&lt;/p&gt;
+
+&lt;p&gt;長年業務で使ってきたこれらのフレームワークについて、実際使ってみてどうだったのか、どのようなプロダクトに向いているのかまとめます。&lt;/p&gt;
+
+&lt;ul class=&quot;table-of-contents&quot;&gt;
+    &lt;li&gt;&lt;a href=&quot;#Laravel-PHP&quot;&gt;Laravel (PHP)&lt;/a&gt;&lt;/li&gt;
+    &lt;li&gt;&lt;a href=&quot;#Slim-Framework-PHP&quot;&gt;Slim Framework (PHP)&lt;/a&gt;&lt;/li&gt;
+    &lt;li&gt;&lt;a href=&quot;#Django-Python&quot;&gt;Django (Python)&lt;/a&gt;&lt;/li&gt;
+    &lt;li&gt;&lt;a href=&quot;#Gin-Go言語&quot;&gt;Gin (Go言語)&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h1 id=&quot;Laravel-PHP&quot;&gt;Laravel (PHP)&lt;/h1&gt;
+
+&lt;p&gt;&lt;span itemscope itemtype=&quot;http://schema.org/Photograph&quot;&gt;&lt;img src=&quot;https://cdn-ak.f.st-hatena.com/images/fotolife/y/yoshiki_utakata/20210526/20210526114644.png&quot; alt=&quot;f:id:yoshiki_utakata:20210526114644p:plain&quot; title=&quot;&quot; class=&quot;hatena-fotolife&quot; itemprop=&quot;image&quot;&gt;&lt;/span&gt;&lt;/p&gt;
+
+&lt;p&gt;Lumen も触ったし、下に書いてあるフレームワークも触ったし、いろいろな言語やフレームワークを触ったけど、一番無難なフレームワークはこれ。&lt;/p&gt;
+
+&lt;p&gt;DB接続、SQLのクエリビルダ、Redisなどのキャッシュ、ログ出力、DI、DBマイグレーションなど、必要なものはだいたい揃っています。&lt;/p&gt;
+
+&lt;p&gt;DIが特に優秀で、何も考えずにDIが実装できます。&lt;/p&gt;
+
+&lt;p&gt;また、Web開発において考えたくない部分だけをフレームワークがやってくれるので、非常に便利です。余分な機能が少なく、ドキュメントも整っているので、学習コストが低いのも魅力です。&lt;/p&gt;
+
+&lt;p&gt;PHP自体も学習コストが低い言語なので、その点も良いです。&lt;/p&gt;
+
+&lt;p&gt;デメリットは、後述のGoなどと比べて遅いこと。PHPが若干遅めなのと、Laravelも重めではあるので、高いパフォーマンスを求めることはできません。&lt;/p&gt;
+
+&lt;p&gt;全体的に簡単で扱いやすいフレームワークなので、一番オススメできるフレームワークです。&lt;/p&gt;
+
+&lt;h1 id=&quot;Slim-Framework-PHP&quot;&gt;Slim Framework (PHP)&lt;/h1&gt;
+
+&lt;p&gt;&lt;span itemscope itemtype=&quot;http://schema.org/Photograph&quot;&gt;&lt;img src=&quot;https://cdn-ak.f.st-hatena.com/images/fotolife/y/yoshiki_utakata/20210526/20210526114800.png&quot; alt=&quot;f:id:yoshiki_utakata:20210526114800p:plain&quot; title=&quot;&quot; class=&quot;hatena-fotolife&quot; itemprop=&quot;image&quot;&gt;&lt;/span&gt;&lt;/p&gt;
+
+&lt;p&gt;基本的には Laravel を使うのがいいです。&lt;/p&gt;
+
+&lt;p&gt;クエリビルダ等が不要で、ルーティングだけあれば良い、かつそこそこパフォーマンスほしい場合は採用するとよいです。&lt;/p&gt;
+
+&lt;h1 id=&quot;Django-Python&quot;&gt;Django (Python)&lt;/h1&gt;
+
+&lt;p&gt;&lt;span itemscope itemtype=&quot;http://schema.org/Photograph&quot;&gt;&lt;img src=&quot;https://cdn-ak.f.st-hatena.com/images/fotolife/y/yoshiki_utakata/20210526/20210526114735.png&quot; alt=&quot;f:id:yoshiki_utakata:20210526114735p:plain&quot; title=&quot;&quot; class=&quot;hatena-fotolife&quot; itemprop=&quot;image&quot;&gt;&lt;/span&gt;&lt;/p&gt;
+
+&lt;p&gt;Python が最近人気言語となってきおり、それに伴い Django も人気のフレームワークとなっています。&lt;/p&gt;
+
+&lt;p&gt;課題としてはパフォーマンスで、PHPと比べても遅いので、かなり課題になると思います。&lt;/p&gt;
+
+&lt;p&gt;機能はLaravelよりも豊富ですが、その分学習コストは高いです。&lt;/p&gt;
+
+&lt;p&gt;Django REST framework という、REST API を簡単に実装できるフレームワークがあり、これが優秀です。&lt;/p&gt;
+
+&lt;p&gt;REST framework に従って REST API を実装するのであれば、かなり優秀かなと思いますが、凝ったことをやろうとすると破綻するので、そこが難しい所です。&lt;/p&gt;
+
+&lt;p&gt;Python を使いたい場合はおすすめですが、言語が何でも良い場合で、Web開発の場合は、Laravel のほうがおすすめかなと思います。&lt;/p&gt;
+
+&lt;h1 id=&quot;Gin-Go言語&quot;&gt;Gin (Go言語)&lt;/h1&gt;
+
+&lt;p&gt;&lt;span itemscope itemtype=&quot;http://schema.org/Photograph&quot;&gt;&lt;img src=&quot;https://cdn-ak.f.st-hatena.com/images/fotolife/y/yoshiki_utakata/20210526/20210526114931.png&quot; alt=&quot;f:id:yoshiki_utakata:20210526114931p:plain&quot; title=&quot;&quot; class=&quot;hatena-fotolife&quot; itemprop=&quot;image&quot;&gt;&lt;/span&gt;&lt;/p&gt;
+
+&lt;p&gt;パフォーマンスを求めるなら非常に良いフレームワークです。&lt;/p&gt;
+
+&lt;p&gt;PHP と比べて5倍〜10倍くらいのパフォーマンス（request/secなど）が出るでしょう。&lt;/p&gt;
+
+&lt;p&gt;フレームワークとしては非常にシンプルで、機能も少ないです。ほぼルーティングの機能しかないです。&lt;/p&gt;
+
+&lt;p&gt;言語としても PHP のように成熟したものでもなければ、 Web 特化でもないので、 Web サービスを作る時には若干扱いづらいところがあります。DIフレームワークなどはまだ微妙かなと感じます。&lt;/p&gt;
+
+&lt;p&gt;Go言語自体の言語仕様も複雑なので、学習コストも高めです。&lt;/p&gt;
+</description>          <pubDate>Thu, 27 May 2021 07:00:00 +0900</pubDate>
+          <guid isPermalink="false">hatenablog://entry/26006613768310230</guid>
+          
+            <category>プログラミング・開発</category>
+          
+            <category>Laravel</category>
+          
+            <category>Django</category>
+          
+            <category>Go言語</category>
+          
+            <category>PHP</category>
+          
+            <category>Python</category>
+          
+          <enclosure url="https://cdn-ak.f.st-hatena.com/images/fotolife/y/yoshiki_utakata/20210526/20210526114644.png" type="image/png" length="0" />
+        </item>
+      
+    
+      
+      
+        <item>
+          <title>Dredd で OpenAPI のスキーマに無いプロパティをエラーにする</title>
+          <link>https://www.utakata.work/entry/dredd/error-on-additional-properties</link>          <description>&lt;p&gt;&lt;span itemscope itemtype=&quot;http://schema.org/Photograph&quot;&gt;&lt;img src=&quot;https://cdn-ak.f.st-hatena.com/images/fotolife/y/yoshiki_utakata/20210522/20210522224051.png&quot; alt=&quot;f:id:yoshiki_utakata:20210522224051p:plain&quot; title=&quot;&quot; class=&quot;hatena-fotolife&quot; itemprop=&quot;image&quot;&gt;&lt;/span&gt;&lt;/p&gt;
+
+
+
+&lt;p&gt;例えば、 &lt;b&gt;OpenAPI の定義&lt;/b&gt;がこうなっていたとします。レスポンスのプロパティとして、 &lt;code&gt;name&lt;/code&gt; と &lt;code&gt;size&lt;/code&gt; があります。&lt;/p&gt;
+
+&lt;pre class=&quot;code lang-yaml&quot; data-lang=&quot;yaml&quot; data-unlink&gt;&lt;span class=&quot;synIdentifier&quot;&gt;responses&lt;/span&gt;&lt;span class=&quot;synSpecial&quot;&gt;:&lt;/span&gt;
+  &lt;span class=&quot;synIdentifier&quot;&gt;200&lt;/span&gt;&lt;span class=&quot;synSpecial&quot;&gt;:&lt;/span&gt;
+    &lt;span class=&quot;synIdentifier&quot;&gt;description&lt;/span&gt;&lt;span class=&quot;synSpecial&quot;&gt;:&lt;/span&gt; 正常系
+    &lt;span class=&quot;synIdentifier&quot;&gt;content&lt;/span&gt;&lt;span class=&quot;synSpecial&quot;&gt;:&lt;/span&gt;
+      &lt;span class=&quot;synIdentifier&quot;&gt;application/json&lt;/span&gt;&lt;span class=&quot;synSpecial&quot;&gt;:&lt;/span&gt;
+        &lt;span class=&quot;synIdentifier&quot;&gt;schema&lt;/span&gt;&lt;span class=&quot;synSpecial&quot;&gt;:&lt;/span&gt;
+          &lt;span class=&quot;synIdentifier&quot;&gt;type&lt;/span&gt;&lt;span class=&quot;synSpecial&quot;&gt;:&lt;/span&gt; object
+          &lt;span class=&quot;synIdentifier&quot;&gt;properties&lt;/span&gt;&lt;span class=&quot;synSpecial&quot;&gt;:&lt;/span&gt;
+            &lt;span class=&quot;synIdentifier&quot;&gt;name&lt;/span&gt;&lt;span class=&quot;synSpecial&quot;&gt;:&lt;/span&gt;
+              &lt;span class=&quot;synIdentifier&quot;&gt;type&lt;/span&gt;&lt;span class=&quot;synSpecial&quot;&gt;:&lt;/span&gt; string
+            &lt;span class=&quot;synIdentifier&quot;&gt;size&lt;/span&gt;&lt;span class=&quot;synSpecial&quot;&gt;:&lt;/span&gt;
+              &lt;span class=&quot;synIdentifier&quot;&gt;type&lt;/span&gt;&lt;span class=&quot;synSpecial&quot;&gt;:&lt;/span&gt; integer
+&lt;/pre&gt;
+
+
+&lt;p&gt;&lt;b&gt;実際の API のレスポンス&lt;/b&gt;がこうだったとします。&lt;/p&gt;
+
+&lt;pre class=&quot;code lang-json&quot; data-lang=&quot;json&quot; data-unlink&gt;&lt;span class=&quot;synSpecial&quot;&gt;{&lt;/span&gt;&amp;quot;&lt;span class=&quot;synStatement&quot;&gt;name&lt;/span&gt;&amp;quot;: &amp;quot;&lt;span class=&quot;synConstant&quot;&gt;Sparta&lt;/span&gt;&amp;quot;, &amp;quot;&lt;span class=&quot;synStatement&quot;&gt;size&lt;/span&gt;&amp;quot;: &lt;span class=&quot;synConstant&quot;&gt;300&lt;/span&gt;, &amp;quot;&lt;span class=&quot;synStatement&quot;&gt;luck&lt;/span&gt;&amp;quot;: &lt;span class=&quot;synConstant&quot;&gt;false&lt;/span&gt;&lt;span class=&quot;synSpecial&quot;&gt;}&lt;/span&gt;
+&lt;/pre&gt;
+
+
+&lt;p&gt;実際のレスポンスには &lt;code&gt;name&lt;/code&gt; と &lt;code&gt;size&lt;/code&gt; に加えて、 &lt;code&gt;luck&lt;/code&gt; が含まれています。&lt;/p&gt;
+
+&lt;p&gt;この時、 Dredd のテストは&lt;span style=&quot;color: #0000cc&quot;&gt;&lt;b&gt;エラーになりません&lt;/b&gt;&lt;/span&gt;。&lt;/p&gt;
+
+&lt;p&gt;この件は、 Dredd のドキュメントの &lt;b&gt;Avoiding Additional Properties&lt;/b&gt; の項にも書いてあります。&lt;/p&gt;
+
+&lt;p&gt;&lt;a href=&quot;https://dredd.org/en/latest/how-to-guides.html#avoiding-additional-properties&quot;&gt;https://dredd.org/en/latest/how-to-guides.html#avoiding-additional-properties&lt;/a&gt;&lt;/p&gt;
+
+&lt;p&gt;JSON スキーマは、不要なプロパティを含んでいたとしても、パースする時にエラーにはならないからです。&lt;/p&gt;
+
+&lt;p&gt;これをエラーにしたい場合、 &lt;b&gt;OpenAPI 2&lt;/b&gt; においては、 &lt;code&gt;additionalProperties: false&lt;/code&gt; を指定すれば良いらしいです。&lt;/p&gt;
+
+&lt;pre class=&quot;code lang-yaml&quot; data-lang=&quot;yaml&quot; data-unlink&gt;&lt;span class=&quot;synIdentifier&quot;&gt;responses&lt;/span&gt;&lt;span class=&quot;synSpecial&quot;&gt;:&lt;/span&gt;
+  &lt;span class=&quot;synIdentifier&quot;&gt;200&lt;/span&gt;&lt;span class=&quot;synSpecial&quot;&gt;:&lt;/span&gt;
+    &lt;span class=&quot;synIdentifier&quot;&gt;description&lt;/span&gt;&lt;span class=&quot;synSpecial&quot;&gt;:&lt;/span&gt; 正常系
+    &lt;span class=&quot;synIdentifier&quot;&gt;content&lt;/span&gt;&lt;span class=&quot;synSpecial&quot;&gt;:&lt;/span&gt;
+      &lt;span class=&quot;synIdentifier&quot;&gt;application/json&lt;/span&gt;&lt;span class=&quot;synSpecial&quot;&gt;:&lt;/span&gt;
+        &lt;span class=&quot;synIdentifier&quot;&gt;schema&lt;/span&gt;&lt;span class=&quot;synSpecial&quot;&gt;:&lt;/span&gt;
+          &lt;span class=&quot;synIdentifier&quot;&gt;type&lt;/span&gt;&lt;span class=&quot;synSpecial&quot;&gt;:&lt;/span&gt; object
+          &lt;span class=&quot;synIdentifier&quot;&gt;additionalProperties&lt;/span&gt;&lt;span class=&quot;synSpecial&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;synConstant&quot;&gt;false&lt;/span&gt;
+          &lt;span class=&quot;synIdentifier&quot;&gt;properties&lt;/span&gt;&lt;span class=&quot;synSpecial&quot;&gt;:&lt;/span&gt;
+            &lt;span class=&quot;synIdentifier&quot;&gt;name&lt;/span&gt;&lt;span class=&quot;synSpecial&quot;&gt;:&lt;/span&gt;
+              &lt;span class=&quot;synIdentifier&quot;&gt;type&lt;/span&gt;&lt;span class=&quot;synSpecial&quot;&gt;:&lt;/span&gt; string
+            &lt;span class=&quot;synIdentifier&quot;&gt;size&lt;/span&gt;&lt;span class=&quot;synSpecial&quot;&gt;:&lt;/span&gt;
+              &lt;span class=&quot;synIdentifier&quot;&gt;type&lt;/span&gt;&lt;span class=&quot;synSpecial&quot;&gt;:&lt;/span&gt; integer
+&lt;/pre&gt;
+
+
+&lt;p&gt;これで、「API にプロパティが追加されたが、 OpenAPI の仕様を変更し忘れていた」という場合に、エラーにできます。&lt;/p&gt;
+
+&lt;p&gt;ただし、 &lt;b&gt;OpenAPI 3&lt;/b&gt; では、 &lt;code&gt;additionalProperties: false&lt;/code&gt; を指定したとしても&lt;span style=&quot;color: #0000cc&quot;&gt;&lt;b&gt;エラーになりません。&lt;/b&gt;&lt;/span&gt; Dredd の OpenAPI 3 対応はまだ experimental （実験的）なので、対応してないということでしょう。&lt;/p&gt;
+
+&lt;p&gt;今回のものを始め、 まだ OpenAPI 3 に対応していない機能は多数あるので注意してください。&lt;/p&gt;
+
+&lt;p&gt;今回の件の詳細を確認したい場合は、先程も挙げた Dredd の公式ドキュメントを確認してください。&lt;/p&gt;
+
+&lt;p&gt;&lt;a href=&quot;https://dredd.org/en/latest/how-to-guides.html#avoiding-additional-properties&quot;&gt;https://dredd.org/en/latest/how-to-guides.html#avoiding-additional-properties&lt;/a&gt;&lt;/p&gt;
+</description>          <pubDate>Wed, 26 May 2021 07:00:00 +0900</pubDate>
+          <guid isPermalink="false">hatenablog://entry/26006613766996683</guid>
+          
+            <category>OpenAPI</category>
+          
+            <category>プログラミング・開発</category>
+          
+          <enclosure url="https://cdn-ak.f.st-hatena.com/images/fotolife/y/yoshiki_utakata/20210522/20210522224051.png" type="image/png" length="0" />
+        </item>
+      
+    
+      
+      
+        <item>
+          <title>統計検定3級過去問解説 2019年11月 問11</title>
+          <link>https://www.utakata.work/entry/toukei-kentei/grade3/2019-11-11</link>          <description>&lt;p&gt;&lt;span itemscope itemtype=&quot;http://schema.org/Photograph&quot;&gt;&lt;img src=&quot;https://cdn-ak.f.st-hatena.com/images/fotolife/y/yoshiki_utakata/20210516/20210516234128.png&quot; alt=&quot;f:id:yoshiki_utakata:20210516234128p:plain&quot; title=&quot;&quot; class=&quot;hatena-fotolife&quot; itemprop=&quot;image&quot;&gt;&lt;/span&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;b&gt;問11次の3つのヒストグラムは，ある高校の生徒300人の数学，国語，英語の定期試験の結果である（各科目100点満点で点数は整数値とする）。ヒストグラムの各階級は，たとえば50点以上60点未満のように，下限値を含み上限値は含まないものとする。ただし，手違いですべての縦軸の最大値を70人として作成してしまった。各階級の柱の上に度数の記載がないところは，当該階級に含まれる人数が70人を超えていることを意味する。なお，100点をとった生徒はどの科目でもいなかった。&lt;/b&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;span itemscope itemtype=&quot;http://schema.org/Photograph&quot;&gt;&lt;img src=&quot;https://cdn-ak.f.st-hatena.com/images/fotolife/y/yoshiki_utakata/20210522/20210522235030.png&quot; alt=&quot;f:id:yoshiki_utakata:20210522235030p:plain&quot; title=&quot;&quot; class=&quot;hatena-fotolife&quot; itemprop=&quot;image&quot;&gt;&lt;/span&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;b&gt;〔1〕国語の点数の第1四分位数と中央値が入る階級の組合せとして，次の1～5のうちから最も適切なものを一つ選べ。&lt;/b&gt;&lt;/p&gt;
+
+&lt;p&gt;四分位数については、統計Webの説明を参考にしてください。&lt;/p&gt;
+
+&lt;p&gt;&lt;iframe src=&quot;https://hatenablog-parts.com/embed?url=https%3A%2F%2Fbellcurve.jp%2Fstatistics%2Fcourse%2F19277.html&quot; title=&quot;4-2. 四分位数を見てみよう | 統計学の時間 | 統計WEB&quot; class=&quot;embed-card embed-webcard&quot; scrolling=&quot;no&quot; frameborder=&quot;0&quot; style=&quot;display: block; width: 100%; height: 155px; max-width: 500px; margin: 10px 0px;&quot;&gt;&lt;/iframe&gt;&lt;cite class=&quot;hatena-citation&quot;&gt;&lt;a href=&quot;https://bellcurve.jp/statistics/course/19277.html&quot;&gt;bellcurve.jp&lt;/a&gt;&lt;/cite&gt;&lt;/p&gt;
+
+&lt;p&gt;生徒が300人いるので、第1四分位数の数値は、75人目の生徒の点数になります。&lt;/p&gt;
+
+&lt;p&gt;国語の点数を順番に足していくと、&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;3 + 6 + 7 + 10 + 16 + 20 = 62&lt;/li&gt;
+&lt;li&gt;これに 30 を足した時点で 92 人になる&lt;/li&gt;
+&lt;/ul&gt;
+
+
+&lt;p&gt;ということで、60点〜70点にいることがわかります。&lt;/p&gt;
+
+&lt;p&gt;中央値ですが、まず、80点未満の生徒を合計すると、144 人いることがわかります。&lt;/p&gt;
+
+&lt;p&gt;80点〜90点の人は70人以上いるので、中央値 = 150人目の生徒と151人目の生徒の平均値は、80点〜90点にあることがわかります。&lt;/p&gt;
+
+&lt;p&gt;&lt;b&gt;〔2〕英語のヒストグラムにおいて，80点以上90点未満の階級には度数の記載がない。英語の試験の点数が80点以上90点未満の階級に含まれる生徒は何人か。&lt;/b&gt;&lt;/p&gt;
+
+&lt;p&gt;これは、他の数字を全部足して、全体の人数である 300 から引くだけです。&lt;/p&gt;
+
+&lt;p&gt;答えは90人となります。&lt;/p&gt;
+
+&lt;p&gt;&lt;b&gt;〔3〕英語の点数の平均値が含まれる階級として，次の1～5のうちから最も適切なものを一つ選べ。&lt;/b&gt;&lt;/p&gt;
+
+&lt;p&gt;例えば、10点以上、20点未満の生徒は3人います。この3人が全員10点だったとします。同様に20点が5人、と、全員が最低の点数だった場合を考えると&lt;/p&gt;
+
+&lt;p&gt;&lt;code&gt;(10*2 + 20*5 + 30*10 + 40*14 + 50*25 + 60*29 + 70*54 + 80*90 + 90*70) / 300 = 70.83&lt;/code&gt;&lt;/p&gt;
+
+&lt;p&gt;全員が最高の点数だった場合を考えると、&lt;/p&gt;
+
+&lt;p&gt;&lt;code&gt;(19*2 + 29*5 + 39*10 + 49*14 + 59*25 + 69*29 + 79*54 + 89*90 + 99*70) / 300 = 79.83&lt;/code&gt;&lt;/p&gt;
+
+&lt;p&gt;（全員が最低だった場合の平均点 + 9点になるので、計算するまでもないです）&lt;/p&gt;
+
+&lt;p&gt;ということで、平均点は70点〜80点に収まっていることがわかります。&lt;/p&gt;
+
+&lt;p&gt;&lt;b&gt;4〕この定期試験を受けたAさんの結果は，数学45点，国語72点，英語91点であった。このとき，上のヒストグラムとAさんの試験の結果から読み取れることとして，次のI～IIIの記述を考えた。&lt;/b&gt;&lt;/p&gt;
+
+&lt;p&gt;ヒストグラムから読み取るだけです。&lt;/p&gt;
+</description>          <pubDate>Tue, 25 May 2021 07:00:00 +0900</pubDate>
+          <guid isPermalink="false">hatenablog://entry/26006613767016435</guid>
+          
+            <category>統計検定</category>
+          
+          <enclosure url="https://cdn-ak.f.st-hatena.com/images/fotolife/y/yoshiki_utakata/20210516/20210516234128.png" type="image/png" length="0" />
+        </item>
+      
+    
+      
+      
+        <item>
+          <title>統計検定3級過去問解説 2019年11月 問7</title>
+          <link>https://www.utakata.work/entry/toukei-kente/grade3/2019-11-7</link>          <description>&lt;p&gt;&lt;span itemscope itemtype=&quot;http://schema.org/Photograph&quot;&gt;&lt;img src=&quot;https://cdn-ak.f.st-hatena.com/images/fotolife/y/yoshiki_utakata/20210516/20210516234128.png&quot; alt=&quot;f:id:yoshiki_utakata:20210516234128p:plain&quot; title=&quot;&quot; class=&quot;hatena-fotolife&quot; itemprop=&quot;image&quot;&gt;&lt;/span&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;b&gt;問7 次の散布図は，全国52都市における，2018年6月の，1世帯当たりのバナナとりんごの支出額を表したものである。&lt;/b&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;span itemscope itemtype=&quot;http://schema.org/Photograph&quot;&gt;&lt;img src=&quot;https://cdn-ak.f.st-hatena.com/images/fotolife/y/yoshiki_utakata/20210522/20210522233343.png&quot; alt=&quot;f:id:yoshiki_utakata:20210522233343p:plain&quot; title=&quot;&quot; class=&quot;hatena-fotolife&quot; itemprop=&quot;image&quot;&gt;&lt;/span&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;b&gt;〔1〕2018年6月の1世帯当たりのバナナの支出額とりんごの支出額の相関係数はいくらか。次の1～5のうちから最も適切なものを一つ選べ。&lt;/b&gt;&lt;/p&gt;
+
+&lt;p&gt;この系統の問題はよく出るが、実際の値が出てないので、カンで近いものを選ぶことになります。&lt;/p&gt;
+
+&lt;p&gt;りんごの支出額が増えるにしたがって、バナナの支出額も増える場合は、正の相関&lt;/p&gt;
+
+&lt;p&gt;りんごの支出額が増えるにしたがって、バナナの支出額も減る場合は、負の相関があります。&lt;/p&gt;
+
+&lt;p&gt;なんとなく、グラフの点が右上がりになっているか、右下がりになっているかで判断できます。&lt;/p&gt;
+
+&lt;p&gt;今回の場合は、右上がりでも右下がりでもないので、相関はなさそうです。そこで、0に最も近い 0.023 が正解となります。&lt;/p&gt;
+
+&lt;p&gt;&lt;b&gt;〔2〕仮に，すべての都市で，7月の1世帯当たりのバナナの支出額は6月の2割増し，りんごの支出額は6月の1割増しになったとする。このときの1世帯当たりのバナナとりんごの支出額について，次のI～IIIの記述を考えた。&lt;/b&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;b&gt;I.7月のバナナの支出額の分散は6月のそれの1.44倍になり，7月のりんごの支出額の分散は6月のそれの1.21倍になる。&lt;/b&gt;&lt;/p&gt;
+
+&lt;p&gt;分散は、平均値との二乗誤差の平均で、すべての値が2割増 = 1.2倍になると、分散は 1.2&lt;sup&gt;2&lt;/sup&gt; 増えます。よって、 I の記述は正しいです。&lt;/p&gt;
+
+&lt;p&gt;&lt;b&gt;II.7月のバナナの支出額とりんごの支出額の共分散は，6月におけるそれの1.32倍になる。&lt;/b&gt;&lt;/p&gt;
+
+&lt;p&gt;共分散は、分散と考え方が似ており、片方が 1.2倍、片方が1.1倍になると、 1.1 * 1.2 = 1.32倍になります。よってIIの記述は正しいです。&lt;/p&gt;
+
+&lt;p&gt;&lt;b&gt;III.7月のバナナの支出額とりんごの支出額の相関係数は，6月におけるそれの1.09倍になる。&lt;/b&gt;&lt;/p&gt;
+
+&lt;p&gt;相関係数は以下の式で求められます&lt;/p&gt;
+
+&lt;p&gt;&lt;span itemscope itemtype=&quot;http://schema.org/Photograph&quot;&gt;&lt;img src=&quot;https://cdn-ak.f.st-hatena.com/images/fotolife/y/yoshiki_utakata/20210522/20210522234452.png&quot; alt=&quot;f:id:yoshiki_utakata:20210522234452p:plain&quot; title=&quot;&quot; class=&quot;hatena-fotolife&quot; itemprop=&quot;image&quot;&gt;&lt;/span&gt;&lt;/p&gt;
+
+&lt;p&gt;この中で、分母の部分は 1.2 * 1.1 倍になります。&lt;/p&gt;
+
+&lt;p&gt;分子の部分は、左が √1.2&lt;sup&gt;2&lt;/sup&gt; 倍 = 1.1倍、右が同様に 1.1 倍になります。&lt;/p&gt;
+
+&lt;p&gt;つまり、相関係数は変わりません。&lt;/p&gt;
+
+&lt;p&gt;当然ですが、バナナの支出額が一律2割増になったりしても、正の相関や負の相関のあるなしには影響を与えないので、相関係数は変わらないということになります。&lt;/p&gt;
+</description>          <pubDate>Mon, 24 May 2021 07:00:00 +0900</pubDate>
+          <guid isPermalink="false">hatenablog://entry/26006613767009264</guid>
+          
+            <category>統計検定</category>
+          
+          <enclosure url="https://cdn-ak.f.st-hatena.com/images/fotolife/y/yoshiki_utakata/20210516/20210516234128.png" type="image/png" length="0" />
+        </item>
+      
+    
+      
+      
+        <item>
+          <title>スマホ視聴向け、ナイトフォール・グロウの動画を投稿しました【ディズニーランド】</title>
+          <link>https://www.utakata.work/entry/disney/nightfall-grow/20210517</link>          <description>&lt;p&gt;&lt;span itemscope itemtype=&quot;http://schema.org/Photograph&quot;&gt;&lt;img src=&quot;https://cdn-ak.f.st-hatena.com/images/fotolife/y/yoshiki_utakata/20210519/20210519101312.png&quot; alt=&quot;f:id:yoshiki_utakata:20210519101312p:plain&quot; title=&quot;&quot; class=&quot;hatena-fotolife&quot; itemprop=&quot;image&quot;&gt;&lt;/span&gt;&lt;/p&gt;
+
+&lt;ul class=&quot;table-of-contents&quot;&gt;
+    &lt;li&gt;&lt;a href=&quot;#ナイトフォールグロウの動画を投稿しました&quot;&gt;ナイトフォール・グロウの動画を投稿しました&lt;/a&gt;&lt;/li&gt;
+    &lt;li&gt;&lt;a href=&quot;#縦長動画&quot;&gt;縦長動画&lt;/a&gt;&lt;ul&gt;
+            &lt;li&gt;&lt;a href=&quot;#撮影&quot;&gt;撮影&lt;/a&gt;&lt;/li&gt;
+            &lt;li&gt;&lt;a href=&quot;#投稿視聴&quot;&gt;投稿→視聴&lt;/a&gt;&lt;ul&gt;
+                    &lt;li&gt;&lt;a href=&quot;#YouTube&quot;&gt;YouTube&lt;/a&gt;&lt;/li&gt;
+                    &lt;li&gt;&lt;a href=&quot;#ニコニコ動画&quot;&gt;ニコニコ動画&lt;/a&gt;&lt;/li&gt;
+                &lt;/ul&gt;
+            &lt;/li&gt;
+        &lt;/ul&gt;
+    &lt;/li&gt;
+    &lt;li&gt;&lt;a href=&quot;#ナイトフォールグロウについて&quot;&gt;ナイトフォール・グロウについて&lt;/a&gt;&lt;/li&gt;
+    &lt;li&gt;&lt;a href=&quot;#サムネを作る時に気をつけていること&quot;&gt;サムネを作る時に気をつけていること&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h1 id=&quot;ナイトフォールグロウの動画を投稿しました&quot;&gt;ナイトフォール・グロウの動画を投稿しました&lt;/h1&gt;
+
+&lt;p&gt;この前、ディズニーランドに行ってきたので、ナイトフォール・グロウの動画を YouTube とニコニコ動画に投稿しました。&lt;/p&gt;
+
+&lt;p&gt;&lt;iframe width=&quot;560&quot; height=&quot;315&quot; src=&quot;https://www.youtube.com/embed/44-FU5g2Oo0?feature=oembed&quot; frameborder=&quot;0&quot; allow=&quot;accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture&quot; allowfullscreen&gt;&lt;/iframe&gt;&lt;cite class=&quot;hatena-citation&quot;&gt;&lt;a href=&quot;https://www.youtube.com/watch?v=44-FU5g2Oo0&quot;&gt;www.youtube.com&lt;/a&gt;&lt;/cite&gt;&lt;/p&gt;
+
+&lt;h1 id=&quot;縦長動画&quot;&gt;縦長動画&lt;/h1&gt;
+
+&lt;p&gt;YouTube もニコニコ動画も、横長の動画が主流かと思います。一方で、TikTok とか、Instagram は、縦の動画が主流じゃないかなと思います。&lt;/p&gt;
+
+&lt;p&gt;しかし、YouTube もニコニコ動画も、縦長の動画が投稿出来ないわけではないんですよね。&lt;/p&gt;
+
+&lt;p&gt;今回のような、キャラクターを撮った動画は、縦長の方が映える場合もあります。では、縦長の動画を YouTube やニコニコ動画に投稿するとどうなるのか？というのを調べたくなりました。&lt;/p&gt;
+
+&lt;p&gt;ということで投稿しました。&lt;/p&gt;
+
+&lt;h2 id=&quot;撮影&quot;&gt;撮影&lt;/h2&gt;
+
+&lt;p&gt;僕が使っているのは iPhone 11 Pro なのですが、フルHDと4Kの動画が撮影できます。僕は今回フルHDで撮影しまいた。4K動画は容量も多く、動画編集ソフトが重くなってしまうからです。画質はフルHDでも十分なので、いつもフルHDで撮るようにしています。&lt;/p&gt;
+
+&lt;p&gt;フルHDの設定で撮った動画は、横1080 x 縦1920 の、一般的にフルHDのサイズになります。iPhone の場合、写真の時と動画の時で解像度が異なるので注意してください。&lt;/p&gt;
+
+&lt;p&gt;また、ニコニコ動画に関しては、投稿できる動画のサイズの最大値があり，縦は 2160 以下となっています&lt;a href=&quot;#f-cf6aa7ff&quot; name=&quot;fn-cf6aa7ff&quot; title=&quot;これは4Kで横長の動画を撮った時の縦の長さです&quot;&gt;*1&lt;/a&gt;。フルHDの縦動画だとギリギリ投稿できます。4Kの縦長動画は投稿できないので気をつけてください。&lt;/p&gt;
+
+&lt;h2 id=&quot;投稿視聴&quot;&gt;投稿→視聴&lt;/h2&gt;
+
+&lt;p&gt;投稿して視聴してみました。&lt;/p&gt;
+
+&lt;h3 id=&quot;YouTube&quot;&gt;YouTube&lt;/h3&gt;
+
+&lt;p&gt;しっかり縦長の再生画面で再生されました。多少上下が切れているっぽいですが、今回の動画に関しては視聴に支障はありません。&lt;/p&gt;
+
+&lt;p&gt;字幕をつけたりしている場合、字幕が切れてしまうことがありそうなので、気をつけたほうがいいです。&lt;/p&gt;
+
+&lt;p&gt;右下の拡大ボタンを押すと、動画全体が見えます。&lt;/p&gt;
+
+&lt;p&gt;&lt;span itemscope itemtype=&quot;http://schema.org/Photograph&quot;&gt;&lt;img src=&quot;https://cdn-ak.f.st-hatena.com/images/fotolife/y/yoshiki_utakata/20210519/20210519102529.png&quot; alt=&quot;f:id:yoshiki_utakata:20210519102529p:plain&quot; title=&quot;&quot; class=&quot;hatena-fotolife&quot; itemprop=&quot;image&quot;&gt;&lt;/span&gt;&lt;/p&gt;
+
+&lt;h3 id=&quot;ニコニコ動画&quot;&gt;ニコニコ動画&lt;/h3&gt;
+
+&lt;p&gt;縦長は両縁に黒帯がついてしまいます。これは残念ではありますが、コメントとの兼ね合いがあるので、ある程度は仕方ないでしょう。&lt;/p&gt;
+
+&lt;p&gt;迫力のある映像で見たい場合はYouTube、コメント付きで見たい場合はニコニコ動画かな、って感じです。&lt;/p&gt;
+
+&lt;p&gt;特に今回のような編集の少ない動画は、ニコニコ動画でコメントが付くことで、動画の質素さがカバーできる面もあるため、一長一短だと思います。&lt;/p&gt;
+
+&lt;p&gt;&lt;span itemscope itemtype=&quot;http://schema.org/Photograph&quot;&gt;&lt;img src=&quot;https://cdn-ak.f.st-hatena.com/images/fotolife/y/yoshiki_utakata/20210519/20210519102901.png&quot; alt=&quot;f:id:yoshiki_utakata:20210519102901p:plain&quot; title=&quot;&quot; class=&quot;hatena-fotolife&quot; itemprop=&quot;image&quot;&gt;&lt;/span&gt;&lt;/p&gt;
+
+&lt;h1 id=&quot;ナイトフォールグロウについて&quot;&gt;ナイトフォール・グロウについて&lt;/h1&gt;
+
+&lt;p&gt;ナイトフォール・グロウは、本来雨の日に行われているパレードですが、現在は新型コロナウィルスの影響をうけて、晴れの日でもグロウが公演されています。&lt;/p&gt;
+
+&lt;p&gt;たまたま、コレを撮影した時雨の日でしたが、パレードは綺麗でした。本来雨の日に行われているパレードなので、雨を考慮した電飾になっているのかもしれないですね。地面に光が反射するのを利用していたり、ちょっとモヤがかかっているのが逆に綺麗に見えるように工夫したりなど。&lt;/p&gt;
+
+&lt;p&gt;結構特徴的なのが、ミッキーが乗ってる台座の上の部分が、鏡のようになっている点ですかね。この鏡の反射と、地面の光の反射がイイカンジに綺麗になっているのかも？&lt;/p&gt;
+
+&lt;h1 id=&quot;サムネを作る時に気をつけていること&quot;&gt;サムネを作る時に気をつけていること&lt;/h1&gt;
+
+&lt;p&gt;最後にサムネなんですが、僕がサムネを作る際に気をつけていることは&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;小さいサムネでも文字が見えるように&lt;/li&gt;
+&lt;li&gt;サムネの右下には動画再生時間が表示されるので、それと文字などが被らないように&lt;/li&gt;
+&lt;/ul&gt;
+
+
+&lt;p&gt;です。&lt;/p&gt;
+
+&lt;p&gt;文字にはフチをしっかりつけて可読性をあげ、文字のサイズも必要以上に大きくします。&lt;/p&gt;
+
+&lt;p&gt;文字のサイズを大きくするために、不要な情報は究極まで削るのも重要です。今回「ナイトフォールグロウ」の文字を入れてますが、正直、画を見ればわかるので、それすら不要なくらいです。&lt;/p&gt;
+
+&lt;p&gt;右下を開けることを考えると、さらに入れられる文字は限られてきます。&lt;/p&gt;
+
+&lt;p&gt;サムネづくり参考にしてみてください。&lt;/p&gt;
+
+&lt;p&gt;ちなみに、ニコニコ動画に投稿した動画はこちらです。&lt;/p&gt;
+
+&lt;p&gt;&lt;iframe src=&quot;https://hatenablog-parts.com/embed?url=https%3A%2F%2Fwww.nicovideo.jp%2Fwatch%2Fsm38753951&quot; title=&quot;ナイトフォール・グロウ　ミッキー部分・縦長動画【東京ディズニーランド】&quot; class=&quot;embed-card embed-webcard&quot; scrolling=&quot;no&quot; frameborder=&quot;0&quot; style=&quot;display: block; width: 100%; height: 155px; max-width: 500px; margin: 10px 0px;&quot;&gt;&lt;/iframe&gt;&lt;cite class=&quot;hatena-citation&quot;&gt;&lt;a href=&quot;https://www.nicovideo.jp/watch/sm38753951&quot;&gt;www.nicovideo.jp&lt;/a&gt;&lt;/cite&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;iframe src=&quot;https://hatenablog-parts.com/embed?url=https%3A%2F%2Fwww.utakata.work%2Fentry%2Fdisney%2Fastro-blaster&quot; title=&quot;アストロブラスターで L-3 脱出のために本当に知っておくべきこと - 猫でもわかるWebプログラミングと副業&quot; class=&quot;embed-card embed-blogcard&quot; scrolling=&quot;no&quot; frameborder=&quot;0&quot; style=&quot;display: block; width: 100%; height: 190px; max-width: 500px; margin: 10px 0px;&quot;&gt;&lt;/iframe&gt;&lt;cite class=&quot;hatena-citation&quot;&gt;&lt;a href=&quot;https://www.utakata.work/entry/disney/astro-blaster&quot;&gt;www.utakata.work&lt;/a&gt;&lt;/cite&gt;&lt;/p&gt;
+&lt;div class=&quot;footnote&quot;&gt;
+&lt;p class=&quot;footnote&quot;&gt;&lt;a href=&quot;#fn-cf6aa7ff&quot; name=&quot;f-cf6aa7ff&quot; class=&quot;footnote-number&quot;&gt;*1&lt;/a&gt;&lt;span class=&quot;footnote-delimiter&quot;&gt;:&lt;/span&gt;&lt;span class=&quot;footnote-text&quot;&gt;これは4Kで横長の動画を撮った時の縦の長さです&lt;/span&gt;&lt;/p&gt;
+&lt;/div&gt;</description>          <pubDate>Sat, 22 May 2021 12:00:00 +0900</pubDate>
+          <guid isPermalink="false">hatenablog://entry/26006613765595951</guid>
+          
+            <category>ディズニー</category>
+          
+            <category>動画</category>
+          
+            <category>ニコニコ動画・ニコニコ生放送</category>
+          
+          <enclosure url="https://cdn-ak.f.st-hatena.com/images/fotolife/y/yoshiki_utakata/20210519/20210519101312.png" type="image/png" length="0" />
+        </item>
+      
+    
+      
+      
+        <item>
+          <title>統計検定3級過去問解説 2019年11月 問5</title>
+          <link>https://www.utakata.work/entry/touke-kentei/grade3/2019-11-5</link>          <description>&lt;p&gt;&lt;span itemscope itemtype=&quot;http://schema.org/Photograph&quot;&gt;&lt;img src=&quot;https://cdn-ak.f.st-hatena.com/images/fotolife/y/yoshiki_utakata/20210516/20210516234128.png&quot; alt=&quot;f:id:yoshiki_utakata:20210516234128p:plain&quot; title=&quot;&quot; class=&quot;hatena-fotolife&quot; itemprop=&quot;image&quot;&gt;&lt;/span&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;b&gt;問5 次の表は，あるクラスの100点満点の数学の試験の結果をまとめたものである。&lt;/b&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;span itemscope itemtype=&quot;http://schema.org/Photograph&quot;&gt;&lt;img src=&quot;https://cdn-ak.f.st-hatena.com/images/fotolife/y/yoshiki_utakata/20210517/20210517165230.png&quot; alt=&quot;f:id:yoshiki_utakata:20210517165230p:plain&quot; title=&quot;&quot; class=&quot;hatena-fotolife&quot; itemprop=&quot;image&quot;&gt;&lt;/span&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;b&gt;上の表の(A)および(B)に入る数値と，このクラスの数学の点数の標準偏差の組合せとして，次の1～5のうちから適切なものを一つ選べ。&lt;/b&gt;&lt;/p&gt;
+
+&lt;p&gt;(A)&lt;/p&gt;
+
+&lt;p&gt;分散 =  データの2乗の平均値 - 平均値の2乗 で求められます。&lt;/p&gt;
+
+&lt;p&gt;ここで、&lt;/p&gt;
+
+&lt;p&gt;分散 = (点数 - 平均点)の2乗 / 40 = 121&lt;/p&gt;
+
+&lt;p&gt;データの2乗の平均値 = (A) / 40&lt;/p&gt;
+
+&lt;p&gt;平均値の2乗 = (2400 / 40)&lt;sup&gt;2&lt;/sup&gt; = 3600&lt;/p&gt;
+
+&lt;p&gt;なので、&lt;/p&gt;
+
+&lt;p&gt;121 = (A)/40 - 3600 となり、&lt;/p&gt;
+
+&lt;p&gt;(A) は 148,840 となります。&lt;/p&gt;
+
+&lt;p&gt;(B)&lt;/p&gt;
+
+&lt;p&gt;点数 - 平均点の合計はかならず0になります。&lt;/p&gt;
+
+&lt;p&gt;標準偏差 = √分散&lt;/p&gt;
+
+&lt;p&gt;分散 = (点数 - 平均点)の2乗 / 40 = 121 なので、&lt;/p&gt;
+
+&lt;p&gt;標準偏差は 11 です。&lt;/p&gt;
+</description>          <pubDate>Fri, 21 May 2021 07:00:00 +0900</pubDate>
+          <guid isPermalink="false">hatenablog://entry/26006613764936758</guid>
+          
+            <category>統計検定</category>
+          
+          <enclosure url="https://cdn-ak.f.st-hatena.com/images/fotolife/y/yoshiki_utakata/20210516/20210516234128.png" type="image/png" length="0" />
+        </item>
+      
+    
+      
+      
+        <item>
+          <title>統計検定3級過去問解説 2019年11月 問4</title>
+          <link>https://www.utakata.work/entry/toukei-kentei/grade3/2019-11-4</link>          <description>&lt;p&gt;&lt;span itemscope itemtype=&quot;http://schema.org/Photograph&quot;&gt;&lt;img src=&quot;https://cdn-ak.f.st-hatena.com/images/fotolife/y/yoshiki_utakata/20210516/20210516234128.png&quot; alt=&quot;f:id:yoshiki_utakata:20210516234128p:plain&quot; title=&quot;&quot; class=&quot;hatena-fotolife&quot; itemprop=&quot;image&quot;&gt;&lt;/span&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;b&gt;問4 次の表は，ある高校の定期試験における英語と数学の結果である。&lt;/b&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;span itemscope itemtype=&quot;http://schema.org/Photograph&quot;&gt;&lt;img src=&quot;https://cdn-ak.f.st-hatena.com/images/fotolife/y/yoshiki_utakata/20210517/20210517163137.png&quot; alt=&quot;f:id:yoshiki_utakata:20210517163137p:plain&quot; title=&quot;&quot; class=&quot;hatena-fotolife&quot; itemprop=&quot;image&quot;&gt;&lt;/span&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;b&gt;(1) 全員の数学の点数に10点を加算することとした。その際，100点を超えた人はいないものとする。このときの数学の点数の平均点と標準偏差の組合せとして，次の1～5のうちから適切なものを一つ選べ。&lt;/b&gt;&lt;/p&gt;
+
+&lt;p&gt;平均点は10点上がる。&lt;/p&gt;
+
+&lt;p&gt;標準偏差 = √分散 である。分散は「みんながどれくらい平均と離れているか」を表す値であり、標準偏差もほぼ同じ意味を持つ。&lt;/p&gt;
+
+&lt;p&gt;今回、全員の点数が10点加算されたため、「みんながどれくらい平均と離れているか」は変化しない。よって、標準偏差は変化しない。&lt;/p&gt;
+
+&lt;p&gt;&lt;b&gt;(2)上の表の英語と数学の点数を，それぞれ定数倍して50点満点に換算したとき，次のI～IIIの記述を考えた。&lt;/b&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;u&gt;I.英語の方が数学よりも平均点が高い。&lt;/u&gt;&lt;/p&gt;
+
+&lt;p&gt;50点満点にしたとき、英語は1/4、数学は1/2の点数になる。平均点もそれぞれ 1/4, 1/2 されるので、28点, 24点で、英語のほうが平均点は高い。&lt;/p&gt;
+
+&lt;p&gt;&lt;u&gt;II.英語の方が数学よりも分散が大きい。&lt;/u&gt;&lt;/p&gt;
+
+&lt;p&gt;標準偏差 = √分散 のため、「分散が大きい」は、「標準偏差が大きい」と同じことになる。&lt;/p&gt;
+
+&lt;p&gt;標準偏差は、分散と同様に、「みんながどれくらい平均と離れているか」を表す値である。点数が1/4や1/2に圧縮されると、平均との距離は近くなるので、標準偏差や分散は小さくなる。&lt;/p&gt;
+
+&lt;p&gt;分散は、平均との二乗平均誤差なので、全員の点数が 1/4 になった場合、分散は (1/4)&lt;sup&gt;2&lt;/sup&gt; になる。&lt;/p&gt;
+
+&lt;p&gt;標準偏差は、√分散。全員の点数が 1/4 になった場合、分散は (1/4)&lt;sup&gt;2&lt;/sup&gt; になり、標準偏差は 1/4 になる。&lt;/p&gt;
+
+&lt;p&gt;英語の点数が 1/4 になるので、標準偏差も 1/4 になり、標準偏差は4。数学は1/2なので、標準偏差は5。数学の方が標準偏差は大きくなるので、分散は&lt;b&gt;数学の方が大きい&lt;/b&gt;。&lt;/p&gt;
+
+&lt;p&gt;&lt;u&gt;III.英語の方が数学よりも変動係数が大きい。&lt;/u&gt;&lt;/p&gt;
+
+&lt;p&gt;変動係数は、 標準偏差 / 平均値 である。これい基づいて計算すると、英語の方が変動係数が大きくなる。&lt;/p&gt;
+
+&lt;p&gt;標準偏差は、点数の圧縮等により変化する問題点がある。200点満点の英語のほうが、100点満点の数学より、標準偏差が大きくなりやすいのである。&lt;/p&gt;
+
+&lt;p&gt;変動係数は、標準偏差を平均で割ることにより、点数の圧縮などの影響を受けなくなる。点数を50点満点に圧縮しても、変動係数の値が変わらないことが、変動係数の特徴である。&lt;/p&gt;
+</description>          <pubDate>Thu, 20 May 2021 07:00:00 +0900</pubDate>
+          <guid isPermalink="false">hatenablog://entry/26006613764926869</guid>
+          
+            <category>統計検定</category>
+          
+          <enclosure url="https://cdn-ak.f.st-hatena.com/images/fotolife/y/yoshiki_utakata/20210516/20210516234128.png" type="image/png" length="0" />
+        </item>
+      
+    
+      
+      
+        <item>
+          <title>アストロブラスターで L-3 脱出のために本当に知っておくべきこと</title>
+          <link>https://www.utakata.work/entry/disney/astro-blaster</link>          <description>&lt;p&gt;&lt;span itemscope itemtype=&quot;http://schema.org/Photograph&quot;&gt;&lt;img src=&quot;https://cdn-ak.f.st-hatena.com/images/fotolife/y/yoshiki_utakata/20210517/20210517085641.jpg&quot; alt=&quot;f:id:yoshiki_utakata:20210517085641j:plain&quot; title=&quot;&quot; class=&quot;hatena-fotolife&quot; itemprop=&quot;image&quot;&gt;&lt;/span&gt;&lt;/p&gt;
+
+&lt;ul class=&quot;table-of-contents&quot;&gt;
+    &lt;li&gt;&lt;a href=&quot;#L-3-から-L-4-になる&quot;&gt;L-3 から L-4 になる&lt;/a&gt;&lt;/li&gt;
+    &lt;li&gt;&lt;a href=&quot;#知識1-的の真ん中の黒い部分に当てる必要がある&quot;&gt;知識1. 的の真ん中の黒い部分に当てる必要がある&lt;/a&gt;&lt;/li&gt;
+    &lt;li&gt;&lt;a href=&quot;#知識2-赤いレーザーポインタを見る&quot;&gt;知識2. 赤いレーザーポインタを見る&lt;/a&gt;&lt;/li&gt;
+    &lt;li&gt;&lt;a href=&quot;#知識3-的の得点&quot;&gt;知識3. 的の得点&lt;/a&gt;&lt;/li&gt;
+    &lt;li&gt;&lt;a href=&quot;#補足&quot;&gt;補足&lt;/a&gt;&lt;ul&gt;
+            &lt;li&gt;&lt;a href=&quot;#知識があっても技術がなければ高得点は取れない&quot;&gt;知識があっても技術がなければ高得点は取れない&lt;/a&gt;&lt;/li&gt;
+        &lt;/ul&gt;
+    &lt;/li&gt;
+    &lt;li&gt;&lt;a href=&quot;#高得点を取る裏技は無い&quot;&gt;高得点を取る裏技は無い&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h1 id=&quot;L-3-から-L-4-になる&quot;&gt;L-3 から L-4 になる&lt;/h1&gt;
+
+&lt;p&gt;東京ディズニーランドのアストロブラスター。色々な解説記事がありますが、なかなか&lt;span style=&quot;color: #0000cc&quot;&gt;&lt;b&gt;L-3&lt;/b&gt;&lt;/span&gt;から抜け出せない人は多いのでは？&lt;/p&gt;
+
+&lt;p&gt;僕もそうでした。&lt;/p&gt;
+
+&lt;p&gt;的に当たってる気がするのに点数が増えない？それは、ゲームのルールを勘違いしてる可能性が高いです。&lt;/p&gt;
+
+&lt;p&gt;アストロブラスターである程度の得点を取るために必要な知識を3つ教えます。&lt;/p&gt;
+
+&lt;p&gt;&lt;span itemscope itemtype=&quot;http://schema.org/Photograph&quot;&gt;&lt;img src=&quot;https://cdn-ak.f.st-hatena.com/images/fotolife/y/yoshiki_utakata/20210517/20210517085816.jpg&quot; alt=&quot;f:id:yoshiki_utakata:20210517085816j:plain&quot; title=&quot;&quot; class=&quot;hatena-fotolife&quot; itemprop=&quot;image&quot;&gt;&lt;/span&gt;&lt;/p&gt;
+
+&lt;h1 id=&quot;知識1-的の真ん中の黒い部分に当てる必要がある&quot;&gt;知識1. 的の真ん中の黒い部分に当てる必要がある&lt;/h1&gt;
+
+&lt;p&gt;勘違いしている人も多い気がしますが、&lt;span style=&quot;color: #0000cc&quot;&gt;&lt;b&gt;的の真ん中の黒い部分&lt;/b&gt;&lt;/span&gt;に当てないと当たりになりません。的全体が当たりではないんですね。&lt;/p&gt;
+
+&lt;p&gt;つなり、思ったより正確に当てないと得点にはならないのです。&lt;/p&gt;
+
+&lt;p&gt;当たった時は的が光ります。光らない時は当たってないので、勘違いしないように。&lt;/p&gt;
+
+&lt;p&gt;&lt;span itemscope itemtype=&quot;http://schema.org/Photograph&quot;&gt;&lt;img src=&quot;https://cdn-ak.f.st-hatena.com/images/fotolife/y/yoshiki_utakata/20210517/20210517161133.png&quot; alt=&quot;f:id:yoshiki_utakata:20210517161133p:plain&quot; title=&quot;&quot; class=&quot;hatena-fotolife&quot; itemprop=&quot;image&quot;&gt;&lt;/span&gt;&lt;/p&gt;
+
+&lt;h1 id=&quot;知識2-赤いレーザーポインタを見る&quot;&gt;知識2. 赤いレーザーポインタを見る&lt;/h1&gt;
+
+&lt;p&gt;ブラスターを打つと、赤いレーザーポインタが発射され、&lt;span style=&quot;color: #0000cc&quot;&gt;&lt;b&gt;的や壁に赤い光&lt;/b&gt;&lt;/span&gt;が見えます。これを見て狙いを修正していくのが良いです。&lt;/p&gt;
+
+&lt;p&gt;慣れるまで非常に見づらいので、ひたすら練習してください。&lt;/p&gt;
+
+&lt;p&gt;先ほど述べたように、マトはかなり小さいので、カンで当てるのは無理です。必ずレーザーポインタを参考にしましょう。&lt;/p&gt;
+
+&lt;h1 id=&quot;知識3-的の得点&quot;&gt;知識3. 的の得点&lt;/h1&gt;
+
+&lt;p&gt;あとは的の得点を把握して、高い得点の的に当てることです。&lt;/p&gt;
+
+&lt;p&gt;しかし、高い得点の的は遠かったり、動いたりしており、当てるのが難しいので、まずは四角の的で練習するのが良いでしょう。&lt;/p&gt;
+
+&lt;p&gt;&lt;span itemscope itemtype=&quot;http://schema.org/Photograph&quot;&gt;&lt;img src=&quot;https://cdn-ak.f.st-hatena.com/images/fotolife/y/yoshiki_utakata/20210517/20210517085841.jpg&quot; alt=&quot;f:id:yoshiki_utakata:20210517085841j:plain&quot; title=&quot;&quot; class=&quot;hatena-fotolife&quot; itemprop=&quot;image&quot;&gt;&lt;/span&gt;&lt;/p&gt;
+
+&lt;h1 id=&quot;補足&quot;&gt;補足&lt;/h1&gt;
+
+&lt;h2 id=&quot;知識があっても技術がなければ高得点は取れない&quot;&gt;知識があっても技術がなければ高得点は取れない&lt;/h2&gt;
+
+&lt;p&gt;ブログの解説を読んだだけで高得点を取ろうとする人がいますが、L-5以上のスコアを取るには、解説だけでは無理です。めちゃめちゃ練習する必要があります。&lt;/p&gt;
+
+&lt;p&gt;この記事は、あくまでも L-3 脱出をお手伝いするもので、それ以上は練習なしでは不可能です。&lt;/p&gt;
+
+&lt;p&gt;この記事の知識を入れた上で練習すれば、いずれ高得点が出せるようになるかもしれません。&lt;/p&gt;
+
+&lt;h1 id=&quot;高得点を取る裏技は無い&quot;&gt;高得点を取る裏技は無い&lt;/h1&gt;
+
+&lt;p&gt;100万点取れる的がある、みたいな情報がありますが、&lt;span style=&quot;color: #ff0000&quot;&gt;&lt;b&gt;ガセです。裏技のような方法はない&lt;/b&gt;&lt;/span&gt;ので地道に頑張りましょう。&lt;/p&gt;
+
+&lt;p&gt;&lt;div class=&quot;hatena-asin-detail&quot;&gt;&lt;a href=&quot;https://www.amazon.co.jp/exec/obidos/ASIN/4062207745/yoshikiutakat-22/&quot;&gt;&lt;img src=&quot;https://m.media-amazon.com/images/I/512RLsJfnOL._SL500_.jpg&quot; class=&quot;hatena-asin-detail-image&quot; alt=&quot;ホーンテッドマンションのすべて&quot; title=&quot;ホーンテッドマンションのすべて&quot;&gt;&lt;/a&gt;&lt;div class=&quot;hatena-asin-detail-info&quot;&gt;&lt;p class=&quot;hatena-asin-detail-title&quot;&gt;&lt;a href=&quot;https://www.amazon.co.jp/exec/obidos/ASIN/4062207745/yoshikiutakat-22/&quot;&gt;ホーンテッドマンションのすべて&lt;/a&gt;&lt;/p&gt;&lt;ul&gt;&lt;li&gt;&lt;span class=&quot;hatena-asin-detail-label&quot;&gt;作者:&lt;/span&gt;&lt;a href=&quot;http://d.hatena.ne.jp/keyword/%A5%B8%A5%A7%A5%A4%A5%BD%A5%F3%A1%A6%A5%B5%A1%BC%A5%EC%A5%EB&quot; class=&quot;keyword&quot;&gt;ジェイソン・サーレル&lt;/a&gt;&lt;/li&gt;&lt;li&gt;&lt;span class=&quot;hatena-asin-detail-label&quot;&gt;発売日:&lt;/span&gt; 2017/10/05&lt;/li&gt;&lt;li&gt;&lt;span class=&quot;hatena-asin-detail-label&quot;&gt;メディア:&lt;/span&gt; 大型本&lt;/li&gt;&lt;/ul&gt;&lt;/div&gt;&lt;div class=&quot;hatena-asin-detail-foot&quot;&gt;&lt;/div&gt;&lt;/div&gt;&lt;/p&gt;
+</description>          <pubDate>Wed, 19 May 2021 07:00:00 +0900</pubDate>
+          <guid isPermalink="false">hatenablog://entry/26006613764789080</guid>
+          
+            <category>ディズニー</category>
+          
+          <enclosure url="https://cdn-ak.f.st-hatena.com/images/fotolife/y/yoshiki_utakata/20210517/20210517161133.png" type="image/png" length="0" />
+        </item>
+      
+    
+      
+      
+        <item>
+          <title>統計検定3級過去問解説 2019年11月 問2</title>
+          <link>https://www.utakata.work/entry/toukei-kentei/grade3/2019-11-2</link>          <description>&lt;p&gt;&lt;span itemscope itemtype=&quot;http://schema.org/Photograph&quot;&gt;&lt;img src=&quot;https://cdn-ak.f.st-hatena.com/images/fotolife/y/yoshiki_utakata/20210516/20210516234128.png&quot; alt=&quot;f:id:yoshiki_utakata:20210516234128p:plain&quot; title=&quot;&quot; class=&quot;hatena-fotolife&quot; itemprop=&quot;image&quot;&gt;&lt;/span&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;b&gt;問2 質的変数に対する棒グラフに関して，次のI～IIIの記述を考えた。&lt;/b&gt;&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;I.どのカテゴリの度数が多いのかを確認できる。&lt;/li&gt;
+&lt;li&gt;II.カテゴリ間に順序がある場合もカテゴリに対応する棒の順番は自由に変えることができる。&lt;/li&gt;
+&lt;li&gt;III.各カテゴリの度数を度数の合計で割った割合で描いてもよい。&lt;/li&gt;
+&lt;/ul&gt;
+
+
+&lt;p&gt;これら記述の正誤を判断しろという問題である。&lt;/p&gt;
+
+&lt;p&gt;I は明らかに正しい。&lt;/p&gt;
+
+&lt;p&gt;統計検定公式から出ている正解によると、III も正しいらしい。実際、割合で書いたとしても棒グラフの形は全く同じなので、問題ないと考えられる。&lt;/p&gt;
+
+&lt;p&gt;II が非常に微妙な記述。&lt;/p&gt;
+
+&lt;p&gt;一応 I と III が「正しい」とわかれば、選択肢は 4 しかないことにはなる。&lt;/p&gt;
+
+&lt;p&gt;II は誤り。&lt;/p&gt;
+
+&lt;p&gt;カテゴリ間に順序がある場合は、棒グラフもその順番にするのが一般的。あるいは、度数の大きい順や、小さい順にすることも考えられるが、いずれにせよ「自由に変える」のは不適切。&lt;/p&gt;
+</description>          <pubDate>Tue, 18 May 2021 07:00:00 +0900</pubDate>
+          <guid isPermalink="false">hatenablog://entry/26006613764698488</guid>
+          
+            <category>統計検定</category>
+          
+          <enclosure url="https://cdn-ak.f.st-hatena.com/images/fotolife/y/yoshiki_utakata/20210516/20210516234128.png" type="image/png" length="0" />
+        </item>
+      
+    
+      
+      
+        <item>
+          <title>統計検定3級過去問解説 2019年11月 問1</title>
+          <link>https://www.utakata.work/entry/toukei-kentei/grade3/2019-11-1</link>          <description>&lt;p&gt;&lt;span itemscope itemtype=&quot;http://schema.org/Photograph&quot;&gt;&lt;img src=&quot;https://cdn-ak.f.st-hatena.com/images/fotolife/y/yoshiki_utakata/20210516/20210516234128.png&quot; alt=&quot;f:id:yoshiki_utakata:20210516234128p:plain&quot; title=&quot;&quot; class=&quot;hatena-fotolife&quot; itemprop=&quot;image&quot;&gt;&lt;/span&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;b&gt;問1 次のa～cの変数のうち，量的変数はどれか。&lt;/b&gt;&lt;/p&gt;
+
+&lt;ol type=&quot;a&quot;&gt;
+&lt;li&gt;性別&lt;/li&gt;
+&lt;li&gt;年齢&lt;/li&gt;
+&lt;li&gt;郵便番号&lt;/li&gt;
+&lt;/ol&gt;
+
+
+&lt;h3&gt;量的変数と質的変数について&lt;/h3&gt;
+
+&lt;p&gt;&lt;span style=&quot;color: #0000cc&quot;&gt;&lt;b&gt;量的変数&lt;/b&gt;&lt;/span&gt;は、数字で表される変数で、その大小に意味があるもののことです。&lt;/p&gt;
+
+&lt;p&gt;&lt;span style=&quot;color: #0000cc&quot;&gt;&lt;b&gt;質的変数&lt;/b&gt;&lt;/span&gt;は、そもそも数字ではなかったり、数字であってもその大小に意味のないもののことです。&lt;/p&gt;
+
+&lt;p&gt;統計WEBの以下のページに、量的変数と質的変数の説明があります。&lt;/p&gt;
+
+&lt;p&gt;&lt;iframe src=&quot;https://hatenablog-parts.com/embed?url=https%3A%2F%2Fbellcurve.jp%2Fstatistics%2Fcourse%2F18575.html&quot; title=&quot;1-1. データをとってみよう | 統計学の時間 | 統計WEB&quot; class=&quot;embed-card embed-webcard&quot; scrolling=&quot;no&quot; frameborder=&quot;0&quot; style=&quot;display: block; width: 100%; height: 155px; max-width: 500px; margin: 10px 0px;&quot;&gt;&lt;/iframe&gt;&lt;cite class=&quot;hatena-citation&quot;&gt;&lt;a href=&quot;https://bellcurve.jp/statistics/course/18575.html&quot;&gt;bellcurve.jp&lt;/a&gt;&lt;/cite&gt;&lt;/p&gt;
+
+&lt;p&gt;その上で問題を見てみると、&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;b&gt;性別&lt;/b&gt;は数字では表されないので&lt;b&gt;質的変数&lt;/b&gt;です&lt;/li&gt;
+&lt;li&gt;&lt;b&gt;年齢&lt;/b&gt;は数字で表され、大小に意味があるため、&lt;b&gt;量的変数&lt;/b&gt;です&lt;/li&gt;
+&lt;li&gt;&lt;b&gt;郵便番号&lt;/b&gt;は数字で表されますが、その大小は意味がありませんので、&lt;b&gt;質的変数&lt;/b&gt;です&lt;/li&gt;
+&lt;/ul&gt;
+
+
+&lt;p&gt;量的変数は &lt;b&gt;b. 年齢&lt;/b&gt; だけになりますので、答えは 2 です。&lt;/p&gt;
+</description>          <pubDate>Mon, 17 May 2021 07:00:00 +0900</pubDate>
+          <guid isPermalink="false">hatenablog://entry/26006613764695119</guid>
+          
+            <category>統計検定</category>
+          
+          <enclosure url="https://cdn-ak.f.st-hatena.com/images/fotolife/y/yoshiki_utakata/20210516/20210516234128.png" type="image/png" length="0" />
+        </item>
+      
+    
+      
+      
+        <item>
+          <title>2021年、統計検定3級に合格しました</title>
+          <link>https://www.utakata.work/entry/toukei-kentei/3</link>          <description>&lt;p&gt;&lt;span itemscope itemtype=&quot;http://schema.org/Photograph&quot;&gt;&lt;img src=&quot;https://cdn-ak.f.st-hatena.com/images/fotolife/y/yoshiki_utakata/20210516/20210516234128.png&quot; alt=&quot;f:id:yoshiki_utakata:20210516234128p:plain&quot; title=&quot;&quot; class=&quot;hatena-fotolife&quot; itemprop=&quot;image&quot;&gt;&lt;/span&gt;&lt;/p&gt;
+
+&lt;ul class=&quot;table-of-contents&quot;&gt;
+    &lt;li&gt;&lt;a href=&quot;#2021年5月時点の情報です&quot;&gt;2021年5月時点の情報です&lt;/a&gt;&lt;/li&gt;
+    &lt;li&gt;&lt;a href=&quot;#どのような試験か&quot;&gt;どのような試験か&lt;/a&gt;&lt;/li&gt;
+    &lt;li&gt;&lt;a href=&quot;#難易度&quot;&gt;難易度&lt;/a&gt;&lt;/li&gt;
+    &lt;li&gt;&lt;a href=&quot;#僕の場合数学のレベルとか&quot;&gt;僕の場合(数学のレベルとか)&lt;/a&gt;&lt;/li&gt;
+    &lt;li&gt;&lt;a href=&quot;#勉強の仕方&quot;&gt;勉強の仕方&lt;/a&gt;&lt;ul&gt;
+            &lt;li&gt;&lt;a href=&quot;#まずは過去問をやった&quot;&gt;まずは過去問をやった&lt;/a&gt;&lt;/li&gt;
+            &lt;li&gt;&lt;a href=&quot;#勉強に使ったテキスト&quot;&gt;勉強に使ったテキスト&lt;/a&gt;&lt;/li&gt;
+            &lt;li&gt;&lt;a href=&quot;#勉強で特に重要なポイント&quot;&gt;勉強で特に重要なポイント&lt;/a&gt;&lt;/li&gt;
+        &lt;/ul&gt;
+    &lt;/li&gt;
+    &lt;li&gt;&lt;a href=&quot;#結果&quot;&gt;結果&lt;/a&gt;&lt;/li&gt;
+    &lt;li&gt;&lt;a href=&quot;#仕事やWeb開発で役に立つかどうか&quot;&gt;仕事やWeb開発で役に立つかどうか&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h1 id=&quot;2021年5月時点の情報です&quot;&gt;2021年5月時点の情報です&lt;/h1&gt;
+
+&lt;p&gt;2021年5月に、統計検定の3級を受けてきました。&lt;/p&gt;
+
+&lt;p&gt;公式ページ: &lt;a href=&quot;https://www.toukei-kentei.jp/&quot;&gt;&amp;#x7D71;&amp;#x8A08;&amp;#x691C;&amp;#x5B9A;&amp;#xFF1A;Japan Statistical Society Certificate&lt;/a&gt;&lt;/p&gt;
+
+&lt;h1 id=&quot;どのような試験か&quot;&gt;どのような試験か&lt;/h1&gt;
+
+&lt;p&gt;以前は、筆記(マークシート)と、CBT(パソコンを使ってテストする)方式がありましたが、今はコロナの影響もあり、&lt;b&gt;パソコンを使う方式のみ&lt;/b&gt;になっています。&lt;/p&gt;
+
+&lt;p&gt;「テストセンター」という受験会場に行き、パソコンを使って受験します。&lt;/p&gt;
+
+&lt;p&gt;みんな一斉にスタートする方式ではなく、好きな日、好きな日時に受験できるので、気軽に申し込むことができます。&lt;/p&gt;
+
+&lt;p&gt;各テストセンターの申し込みページに行くと、開催日時が見られますが、かなりの頻度でやっているところもあります。&lt;/p&gt;
+
+&lt;p&gt;&lt;span itemscope itemtype=&quot;http://schema.org/Photograph&quot;&gt;&lt;img src=&quot;https://cdn-ak.f.st-hatena.com/images/fotolife/y/yoshiki_utakata/20210515/20210515140113.png&quot; alt=&quot;f:id:yoshiki_utakata:20210515140113p:plain&quot; title=&quot;&quot; class=&quot;hatena-fotolife&quot; itemprop=&quot;image&quot;&gt;&lt;/span&gt;&lt;/p&gt;
+
+&lt;p&gt;「オデッセイ」というテストセンターで申し込めます。&lt;/p&gt;
+
+&lt;p&gt;&lt;a href=&quot;https://cbt.odyssey-com.co.jp/toukei-kentei.html&quot;&gt;https://cbt.odyssey-com.co.jp/toukei-kentei.html&lt;/a&gt;&lt;/p&gt;
+
+&lt;p&gt;3級は、5択の問題30問。時間は60分です。&lt;/p&gt;
+
+&lt;p&gt;合格は65点以上です。&lt;/p&gt;
+
+&lt;p&gt;持ち込めるものは電卓のみです。筆記用具はテストセンターで用意されている紙とペンのみ使えます。関数電卓は使えません。詳細は公式ページを確認してください。&lt;/p&gt;
+
+&lt;h1 id=&quot;難易度&quot;&gt;難易度&lt;/h1&gt;
+
+&lt;p&gt;大学の1,2年あたりで勉強する統計の基礎が理解できていれば、かなり余裕なレベルです。&lt;/p&gt;
+
+&lt;p&gt;高校卒業程度の数学力があれば余裕だと思います。&lt;/p&gt;
+
+&lt;h1 id=&quot;僕の場合数学のレベルとか&quot;&gt;僕の場合(数学のレベルとか)&lt;/h1&gt;
+
+&lt;p&gt;高校数学はかなり得意なレベル、大学は理系ですが、理系大学生としては標準的な数学レベル(大学の授業は全くわからん)くらいかと思います。&lt;a href=&quot;#f-d6eb960d&quot; name=&quot;fn-d6eb960d&quot; title=&quot;大学の数学普通に理解できる人はかなり少数かなと思うので...&quot;&gt;*1&lt;/a&gt;&lt;/p&gt;
+
+&lt;h1 id=&quot;勉強の仕方&quot;&gt;勉強の仕方&lt;/h1&gt;
+
+&lt;h2 id=&quot;まずは過去問をやった&quot;&gt;まずは過去問をやった&lt;/h2&gt;
+
+&lt;p&gt;公式ページに過去問があるので、まずやってみるのが良いでしょう。問題の傾向と、レベルの把握ができます。&lt;/p&gt;
+
+&lt;p&gt;ただし、注意点があります。&lt;/p&gt;
+
+&lt;p&gt;公式にある過去問は、ペーパーテストだった時の過去問(2019年)なので、少し古いです。&lt;/p&gt;
+
+&lt;p&gt;2021年には、「分布」と「検定」が範囲に含まれています。「分布」と「検定」は過去問にないので注意してください。&lt;/p&gt;
+
+&lt;p&gt;ただ、分布と検定を捨てても、他が取れれば問題なく合格できるかと思います。&lt;/p&gt;
+
+&lt;h2 id=&quot;勉強に使ったテキスト&quot;&gt;勉強に使ったテキスト&lt;/h2&gt;
+
+&lt;p&gt;本は買わなくても合格できそうだったので、買いませんでした。&lt;/p&gt;
+
+&lt;p&gt;大学の統計の復習のために、「統計の時間」だけさっと読みました。量が多いので、さっと読むくらいで十分です。&lt;/p&gt;
+
+&lt;p&gt;&lt;iframe src=&quot;https://hatenablog-parts.com/embed?url=https%3A%2F%2Fbellcurve.jp%2Fstatistics%2Fcourse%2F&quot; title=&quot;統計学の時間 | 統計WEB&quot; class=&quot;embed-card embed-webcard&quot; scrolling=&quot;no&quot; frameborder=&quot;0&quot; style=&quot;display: block; width: 100%; height: 155px; max-width: 500px; margin: 10px 0px;&quot;&gt;&lt;/iframe&gt;&lt;cite class=&quot;hatena-citation&quot;&gt;&lt;a href=&quot;https://bellcurve.jp/statistics/course/&quot;&gt;bellcurve.jp&lt;/a&gt;&lt;/cite&gt;&lt;/p&gt;
+
+&lt;h2 id=&quot;勉強で特に重要なポイント&quot;&gt;勉強で特に重要なポイント&lt;/h2&gt;
+
+&lt;p&gt;よく出るなと思ったポイントは以下です。&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;質的変数と量的変数の区別&lt;/li&gt;
+&lt;li&gt;度数分布とヒストグラム&lt;/li&gt;
+&lt;li&gt;平均値・中央値&lt;/li&gt;
+&lt;li&gt;分散、標準偏差、変動係数、偏差値の計算と特徴&lt;/li&gt;
+&lt;li&gt;相関係数の計算と特徴&lt;/li&gt;
+&lt;li&gt;母集団と標本集団について&lt;/li&gt;
+&lt;li&gt;確率を求める問題&lt;/li&gt;
+&lt;li&gt;検定に関する用語の説明
+
+&lt;ul&gt;
+&lt;li&gt;&lt;a href=&quot;https://bellcurve.jp/statistics/course/9311.html&quot;&gt;https://bellcurve.jp/statistics/course/9311.html&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+
+
+&lt;p&gt;検定以外の部分は、過去問をやってみて、どんな問題が出るか把握すると良いです。&lt;/p&gt;
+
+&lt;p&gt;「検定」については、計算問題も出ますが、難しいので、用語の意味だけ抑えておくのが良いかなと思いました。リンクもつけておいたので確認してみてください。&lt;/p&gt;
+
+&lt;p&gt;「分布」については、このリストに入っていませんが、覚えることや計算量が多く、勉強のコスパが良くないです。後回しで良いと思いました。&lt;/p&gt;
+
+&lt;h1 id=&quot;結果&quot;&gt;結果&lt;/h1&gt;
+
+&lt;p&gt;僕は検定と分布は全て捨てましたが、90点で合格しました。検定と分布以外は満点くらいのレベルでした。&lt;/p&gt;
+
+&lt;p&gt;2019年の過去問2回を解いて、わからなかった問題を、統計Webで復習、1週間くらい勉強してこの点数でした。&lt;/p&gt;
+
+&lt;h1 id=&quot;仕事やWeb開発で役に立つかどうか&quot;&gt;仕事やWeb開発で役に立つかどうか&lt;/h1&gt;
+
+&lt;p&gt;Web開発の仕事で統計検定の知識が役に立つことは少ないと思います。&lt;/p&gt;
+
+&lt;p&gt;唯一役に立つのがABテストを行うときで、AとBはどちらが優れているのかを判定するのは、統計における「検定」の知識を使うことになります。&lt;/p&gt;
+
+&lt;p&gt;それ以外ではあまり使わないですね...&lt;/p&gt;
+&lt;div class=&quot;footnote&quot;&gt;
+&lt;p class=&quot;footnote&quot;&gt;&lt;a href=&quot;#fn-d6eb960d&quot; name=&quot;f-d6eb960d&quot; class=&quot;footnote-number&quot;&gt;*1&lt;/a&gt;&lt;span class=&quot;footnote-delimiter&quot;&gt;:&lt;/span&gt;&lt;span class=&quot;footnote-text&quot;&gt;大学の数学普通に理解できる人はかなり少数かなと思うので...&lt;/span&gt;&lt;/p&gt;
+&lt;/div&gt;</description>          <pubDate>Sun, 16 May 2021 12:00:00 +0900</pubDate>
+          <guid isPermalink="false">hatenablog://entry/26006613763970990</guid>
+          
+            <category>統計検定</category>
+          
+          <enclosure url="https://cdn-ak.f.st-hatena.com/images/fotolife/y/yoshiki_utakata/20210516/20210516234128.png" type="image/png" length="0" />
+        </item>
+      
+    
+      
+      
+        <item>
+          <title>2021年 PHP でスクレイピングするなら php-html-parser</title>
+          <link>https://www.utakata.work/entry/php/webscraping-with-php-html-parser</link>          <description>&lt;p&gt;&lt;span itemscope itemtype=&quot;http://schema.org/Photograph&quot;&gt;&lt;img src=&quot;https://cdn-ak.f.st-hatena.com/images/fotolife/y/yoshiki_utakata/20210510/20210510220646.png&quot; alt=&quot;f:id:yoshiki_utakata:20210510220646p:plain&quot; title=&quot;&quot; class=&quot;hatena-fotolife&quot; itemprop=&quot;image&quot;&gt;&lt;/span&gt;&lt;/p&gt;
+
+&lt;h1&gt;PHP でスクレイピングするなら php-html-parser&lt;/h1&gt;
+
+&lt;p&gt;以前、以下の記事を書きましたが、 phpQuery は3年以上更新が止まっており、最新の PHP に対応してないなど問題がありました。&lt;/p&gt;
+
+&lt;p&gt;&lt;iframe src=&quot;https://hatenablog-parts.com/embed?url=https%3A%2F%2Fwww.utakata.work%2Fentry%2Fphp%2Fintroduce-phpquery&quot; title=&quot;PHPでサクッとWebスクレイピングするならphpQuery - 猫でもわかるWebプログラミングと副業&quot; class=&quot;embed-card embed-blogcard&quot; scrolling=&quot;no&quot; frameborder=&quot;0&quot; style=&quot;display: block; width: 100%; height: 190px; max-width: 500px; margin: 10px 0px;&quot;&gt;&lt;/iframe&gt;&lt;cite class=&quot;hatena-citation&quot;&gt;&lt;a href=&quot;https://www.utakata.work/entry/php/introduce-phpquery&quot;&gt;www.utakata.work&lt;/a&gt;&lt;/cite&gt;&lt;/p&gt;
+
+&lt;p&gt;別のライブラリを探していたら、 php-html-parser がかなり良かったので紹介します。&lt;/p&gt;
+
+&lt;p&gt;&lt;iframe src=&quot;https://hatenablog-parts.com/embed?url=https%3A%2F%2Fgithub.com%2Fpaquettg%2Fphp-html-parser&quot; title=&quot;paquettg/php-html-parser&quot; class=&quot;embed-card embed-webcard&quot; scrolling=&quot;no&quot; frameborder=&quot;0&quot; style=&quot;display: block; width: 100%; height: 155px; max-width: 500px; margin: 10px 0px;&quot;&gt;&lt;/iframe&gt;&lt;cite class=&quot;hatena-citation&quot;&gt;&lt;a href=&quot;https://github.com/paquettg/php-html-parser&quot;&gt;github.com&lt;/a&gt;&lt;/cite&gt;&lt;/p&gt;
+
+&lt;h1&gt;PHP のバージョン&lt;/h1&gt;
+
+&lt;p&gt;今回、 PHP のバージョンは 8.0 を使っていますが、7.4 とか、7系でも問題なく動くと思います。&lt;/p&gt;
+
+&lt;pre class=&quot;code lang-sh&quot; data-lang=&quot;sh&quot; data-unlink&gt;$ php &lt;span class=&quot;synSpecial&quot;&gt;-v&lt;/span&gt;
+PHP &lt;span class=&quot;synConstant&quot;&gt;8&lt;/span&gt;.&lt;span class=&quot;synConstant&quot;&gt;0&lt;/span&gt;.&lt;span class=&quot;synConstant&quot;&gt;0&lt;/span&gt; &lt;span class=&quot;synPreProc&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;synSpecial&quot;&gt;cli&lt;/span&gt;&lt;span class=&quot;synPreProc&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;synPreProc&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;synSpecial&quot;&gt;built: Nov &lt;/span&gt;&lt;span class=&quot;synConstant&quot;&gt;30&lt;/span&gt;&lt;span class=&quot;synSpecial&quot;&gt; &lt;/span&gt;&lt;span class=&quot;synConstant&quot;&gt;2020&lt;/span&gt;&lt;span class=&quot;synSpecial&quot;&gt; 13:43:08&lt;/span&gt;&lt;span class=&quot;synPreProc&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;synPreProc&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;synSpecial&quot;&gt; NTS &lt;/span&gt;&lt;span class=&quot;synPreProc&quot;&gt;)&lt;/span&gt;
+Copyright &lt;span class=&quot;synPreProc&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;synSpecial&quot;&gt;c&lt;/span&gt;&lt;span class=&quot;synPreProc&quot;&gt;)&lt;/span&gt; The PHP Group
+Zend Engine v4.&lt;span class=&quot;synConstant&quot;&gt;0&lt;/span&gt;.0-dev, Copyright &lt;span class=&quot;synPreProc&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;synSpecial&quot;&gt;c&lt;/span&gt;&lt;span class=&quot;synPreProc&quot;&gt;)&lt;/span&gt; Zend Technologies
+    with Zend OPcache v8.&lt;span class=&quot;synConstant&quot;&gt;0&lt;/span&gt;.&lt;span class=&quot;synConstant&quot;&gt;0&lt;/span&gt;, Copyright &lt;span class=&quot;synPreProc&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;synSpecial&quot;&gt;c&lt;/span&gt;&lt;span class=&quot;synPreProc&quot;&gt;)&lt;/span&gt;, by Zend Technologies
+&lt;/pre&gt;
+
+
+&lt;h1&gt;php-html-parser をインストール&lt;/h1&gt;
+
+&lt;p&gt;composer を使って php-html-parser をインストールします（composer の使い方については省略します。 PHP を使うなら composer は知っておいたほうが良いです）。&lt;/p&gt;
+
+&lt;p&gt;下記コマンドでインストールします。&lt;/p&gt;
+
+&lt;pre class=&quot;code lang-sh&quot; data-lang=&quot;sh&quot; data-unlink&gt;$ composer require paquettg/php-html-parser
+&lt;/pre&gt;
+
+
+&lt;h1&gt;実際に使ってみる&lt;/h1&gt;
+
+&lt;p&gt;Amazon のページから、商品名をとってみます。&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;a href=&quot;https://www.amazon.co.jp/gp/product/B07QNJDLGR&quot;&gt;https://www.amazon.co.jp/gp/product/B07QNJDLGR&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+
+&lt;p&gt;商品名が書いてある dom は &lt;code&gt;id=&quot;productTitle&quot;&lt;/code&gt; です。&lt;/p&gt;
+
+&lt;p&gt;&lt;span itemscope itemtype=&quot;http://schema.org/Photograph&quot;&gt;&lt;img src=&quot;https://cdn-ak.f.st-hatena.com/images/fotolife/y/yoshiki_utakata/20210511/20210511094808.png&quot; alt=&quot;f:id:yoshiki_utakata:20210511094808p:plain&quot; title=&quot;&quot; class=&quot;hatena-fotolife&quot; itemprop=&quot;image&quot;&gt;&lt;/span&gt;&lt;/p&gt;
+
+&lt;p&gt;コードは以下の通り。&lt;/p&gt;
+
+&lt;pre class=&quot;code lang-php&quot; data-lang=&quot;php&quot; data-unlink&gt;&lt;span class=&quot;synSpecial&quot;&gt;&amp;lt;?php&lt;/span&gt;
+
+&lt;span class=&quot;synPreProc&quot;&gt;require_once&lt;/span&gt; &lt;span class=&quot;synConstant&quot;&gt;__DIR__&lt;/span&gt; &lt;span class=&quot;synStatement&quot;&gt;.&lt;/span&gt; &lt;span class=&quot;synConstant&quot;&gt;&#39;/vendor/autoload.php&#39;&lt;/span&gt;;
+
+&lt;span class=&quot;synPreProc&quot;&gt;use&lt;/span&gt; PHPHtmlParser\Dom;
+&lt;span class=&quot;synPreProc&quot;&gt;use&lt;/span&gt; PHPHtmlParser\Options;
+
+&lt;span class=&quot;synComment&quot;&gt;// 文字コードを設定する。&lt;/span&gt;
+&lt;span class=&quot;synComment&quot;&gt;// 日本語だと文字コードの自動解析がうまく動かないようなので、&lt;/span&gt;
+&lt;span class=&quot;synComment&quot;&gt;// ページに合わせて設定する必要があります&lt;/span&gt;
+&lt;span class=&quot;synStatement&quot;&gt;$&lt;/span&gt;&lt;span class=&quot;synIdentifier&quot;&gt;options&lt;/span&gt; &lt;span class=&quot;synStatement&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;synPreProc&quot;&gt;new&lt;/span&gt; Options&lt;span class=&quot;synSpecial&quot;&gt;()&lt;/span&gt;;
+&lt;span class=&quot;synStatement&quot;&gt;$&lt;/span&gt;&lt;span class=&quot;synIdentifier&quot;&gt;options&lt;/span&gt;&lt;span class=&quot;synType&quot;&gt;-&amp;gt;&lt;/span&gt;setEnforceEncoding&lt;span class=&quot;synSpecial&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;synConstant&quot;&gt;&#39;utf8&#39;&lt;/span&gt;&lt;span class=&quot;synSpecial&quot;&gt;)&lt;/span&gt;;
+
+&lt;span class=&quot;synComment&quot;&gt;// 文字化けする場合は Shift JIS を試してみてください&lt;/span&gt;
+&lt;span class=&quot;synComment&quot;&gt;// $options-&amp;gt;setEnforceEncoding(&#39;sjis&#39;);&lt;/span&gt;
+
+&lt;span class=&quot;synComment&quot;&gt;// ページを解析&lt;/span&gt;
+&lt;span class=&quot;synStatement&quot;&gt;$&lt;/span&gt;&lt;span class=&quot;synIdentifier&quot;&gt;url&lt;/span&gt; &lt;span class=&quot;synStatement&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;synConstant&quot;&gt;&#39;https://www.amazon.co.jp/gp/product/B07QNJDLGR&#39;&lt;/span&gt;;
+&lt;span class=&quot;synStatement&quot;&gt;$&lt;/span&gt;&lt;span class=&quot;synIdentifier&quot;&gt;dom&lt;/span&gt; &lt;span class=&quot;synStatement&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;synPreProc&quot;&gt;new&lt;/span&gt; Dom&lt;span class=&quot;synSpecial&quot;&gt;()&lt;/span&gt;;
+&lt;span class=&quot;synStatement&quot;&gt;$&lt;/span&gt;&lt;span class=&quot;synIdentifier&quot;&gt;dom&lt;/span&gt;&lt;span class=&quot;synType&quot;&gt;-&amp;gt;&lt;/span&gt;loadFromUrl&lt;span class=&quot;synSpecial&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;synStatement&quot;&gt;$&lt;/span&gt;&lt;span class=&quot;synIdentifier&quot;&gt;url&lt;/span&gt;, &lt;span class=&quot;synStatement&quot;&gt;$&lt;/span&gt;&lt;span class=&quot;synIdentifier&quot;&gt;options&lt;/span&gt;&lt;span class=&quot;synSpecial&quot;&gt;)&lt;/span&gt;;
+
+&lt;span class=&quot;synComment&quot;&gt;// 商品名を取得&lt;/span&gt;
+&lt;span class=&quot;synStatement&quot;&gt;$&lt;/span&gt;&lt;span class=&quot;synIdentifier&quot;&gt;element&lt;/span&gt; &lt;span class=&quot;synStatement&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;synStatement&quot;&gt;$&lt;/span&gt;&lt;span class=&quot;synIdentifier&quot;&gt;dom&lt;/span&gt;&lt;span class=&quot;synType&quot;&gt;-&amp;gt;&lt;/span&gt;&lt;span class=&quot;synIdentifier&quot;&gt;find&lt;/span&gt;&lt;span class=&quot;synSpecial&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;synConstant&quot;&gt;&#39;#productTitle&#39;&lt;/span&gt;&lt;span class=&quot;synSpecial&quot;&gt;)&lt;/span&gt;;
+&lt;span class=&quot;synPreProc&quot;&gt;echo&lt;/span&gt; &lt;span class=&quot;synStatement&quot;&gt;$&lt;/span&gt;&lt;span class=&quot;synIdentifier&quot;&gt;element&lt;/span&gt;&lt;span class=&quot;synType&quot;&gt;-&amp;gt;&lt;/span&gt;text &lt;span class=&quot;synStatement&quot;&gt;.&lt;/span&gt; &lt;span class=&quot;synConstant&quot;&gt;&amp;quot;&lt;/span&gt;&lt;span class=&quot;synSpecial&quot;&gt;\n&lt;/span&gt;&lt;span class=&quot;synConstant&quot;&gt;&amp;quot;&lt;/span&gt;;
+&lt;/pre&gt;
+
+
+&lt;p&gt;簡単に取得することができます。&lt;/p&gt;
+
+&lt;pre class=&quot;code lang-sh&quot; data-lang=&quot;sh&quot; data-unlink&gt;$ php scraper.php
+ 【最新版】自撮り棒 iphone Android セルカ棒 Bluetooth 無線 シャッターボタン付き &lt;span class=&quot;synConstant&quot;&gt;360&lt;/span&gt;度回転 スマホ セルカ棒 三脚/一脚兼用 小型 iphone6 s/iphone7/iphone8/iphone8 plus/iphone x/xs/max等対応 コンパクト 軽量 携帯 リモコン付き バックミラー付き &lt;span class=&quot;synPreProc&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;synSpecial&quot;&gt;黒&lt;/span&gt;&lt;span class=&quot;synPreProc&quot;&gt;)&lt;/span&gt;
+&lt;/pre&gt;
+
+
+&lt;p&gt;実際のコード全体はこちらのリポジトリから確認できます。&lt;/p&gt;
+
+&lt;p&gt;&lt;iframe src=&quot;https://hatenablog-parts.com/embed?url=https%3A%2F%2Fgithub.com%2Fyoshikyoto%2Fphp-scraping-sample&quot; title=&quot;yoshikyoto/php-scraping-sample&quot; class=&quot;embed-card embed-webcard&quot; scrolling=&quot;no&quot; frameborder=&quot;0&quot; style=&quot;display: block; width: 100%; height: 155px; max-width: 500px; margin: 10px 0px;&quot;&gt;&lt;/iframe&gt;&lt;cite class=&quot;hatena-citation&quot;&gt;&lt;a href=&quot;https://github.com/yoshikyoto/php-scraping-sample&quot;&gt;github.com&lt;/a&gt;&lt;/cite&gt;&lt;/p&gt;
+
+&lt;h1&gt;&lt;/h1&gt;
+</description>          <pubDate>Sat, 15 May 2021 12:00:00 +0900</pubDate>
+          <guid isPermalink="false">hatenablog://entry/26006613762331484</guid>
+          
+            <category>PHP</category>
+          
+            <category>ライフハック</category>
+          
+            <category>プログラミング・開発</category>
+          
+          <enclosure url="https://cdn-ak.f.st-hatena.com/images/fotolife/y/yoshiki_utakata/20210510/20210510220646.png" type="image/png" length="0" />
+        </item>
+      
+    
+      
+      
+        <item>
+          <title>PHP の composer でパッケージを uninstall する時の正しいコマンドは何か</title>
+          <link>https://www.utakata.work/entry/php/composer-uninstall</link>          <description>&lt;p&gt;&lt;span itemscope itemtype=&quot;http://schema.org/Photograph&quot;&gt;&lt;img src=&quot;https://cdn-ak.f.st-hatena.com/images/fotolife/y/yoshiki_utakata/20210510/20210510220646.png&quot; alt=&quot;f:id:yoshiki_utakata:20210510220646p:plain&quot; title=&quot;&quot; class=&quot;hatena-fotolife&quot; itemprop=&quot;image&quot;&gt;&lt;/span&gt;&lt;/p&gt;
+
+&lt;ul class=&quot;table-of-contents&quot;&gt;
+    &lt;li&gt;&lt;a href=&quot;#composer-require-と-composer-remove&quot;&gt;composer require と composer remove&lt;/a&gt;&lt;/li&gt;
+    &lt;li&gt;&lt;a href=&quot;#結論-composerlock-を作り直すしかない&quot;&gt;結論: composer.lock を作り直すしかない&lt;/a&gt;&lt;/li&gt;
+    &lt;li&gt;&lt;a href=&quot;#composerlock-を作り直したくない&quot;&gt;composer.lock を作り直したくない&lt;/a&gt;&lt;ul&gt;
+            &lt;li&gt;&lt;a href=&quot;#依存をきれいに消すコマンドは無い&quot;&gt;依存をきれいに消すコマンドは無い&lt;/a&gt;&lt;/li&gt;
+            &lt;li&gt;&lt;a href=&quot;#composer-update-コマンドをうまく使う&quot;&gt;composer update コマンドをうまく使う&lt;/a&gt;&lt;/li&gt;
+            &lt;li&gt;&lt;a href=&quot;#composer-update-する場合の注意点&quot;&gt;composer update する場合の注意点&lt;/a&gt;&lt;/li&gt;
+        &lt;/ul&gt;
+    &lt;/li&gt;
+    &lt;li&gt;&lt;a href=&quot;#結論&quot;&gt;結論&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h1 id=&quot;composer-require-と-composer-remove&quot;&gt;composer require と composer remove&lt;/h1&gt;
+
+&lt;p&gt;&lt;code&gt;composer require A&lt;/code&gt; した時に、以下の2つのライブラリがインストールされたとする。&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;ライブラリA&lt;/li&gt;
+&lt;li&gt;Aが依存しているライブラリB&lt;/li&gt;
+&lt;/ul&gt;
+
+
+&lt;p&gt;この時、 &lt;code&gt;composer.json&lt;/code&gt; には A が追加され、 &lt;code&gt;compose.lock&lt;/code&gt; には A と B が追加される。&lt;/p&gt;
+
+&lt;p&gt;その後、 A が不要になったので、 &lt;code&gt;composer remove A&lt;/code&gt; とすると、 &lt;code&gt;composer.lock&lt;/code&gt; には B が残ってしまう。&lt;/p&gt;
+
+&lt;p&gt;どうにか B まできれいに消せないだろうか。&lt;/p&gt;
+
+&lt;h1 id=&quot;結論-composerlock-を作り直すしかない&quot;&gt;結論: composer.lock を作り直すしかない&lt;/h1&gt;
+
+&lt;p&gt;このような不要なライブラリを &lt;code&gt;composer.lock&lt;/code&gt; から削除したい場合、 &lt;code&gt;composer.lock&lt;/code&gt; を生成し直すしかありません。&lt;/p&gt;
+
+&lt;p&gt;&lt;code&gt;composer.lock&lt;/code&gt; を削除した後に、 &lt;code&gt;composer install&lt;/code&gt; して、 &lt;code&gt;composer.lock&lt;/code&gt; を生成しなおせば、依存関係はきれいになります。&lt;/p&gt;
+
+&lt;p&gt;しかし、これをすると全てのライブラリのバージョンが上がってしまい、アプリが動かなくなる場合もあります。&lt;/p&gt;
+
+&lt;h1 id=&quot;composerlock-を作り直したくない&quot;&gt;composer.lock を作り直したくない&lt;/h1&gt;
+
+&lt;p&gt;ではどうすればいいのでしょうか。&lt;/p&gt;
+
+&lt;h2 id=&quot;依存をきれいに消すコマンドは無い&quot;&gt;依存をきれいに消すコマンドは無い&lt;/h2&gt;
+
+&lt;p&gt;ライブラリをアンインストールしつつ、依存しているライブラリも消すコマンドはありません。&lt;/p&gt;
+
+&lt;p&gt;なぜでしょうか。&lt;/p&gt;
+
+&lt;p&gt;A, B, C の3つのライブラリがあり、&lt;/p&gt;
+
+&lt;pre class=&quot;code&quot; data-lang=&quot;&quot; data-unlink&gt;A -&amp;gt; B &amp;lt;- C&lt;/pre&gt;
+
+
+&lt;p&gt;のような依存関係になっているとします。&lt;/p&gt;
+
+&lt;p&gt;この場合、 &lt;code&gt;C -&amp;gt; B&lt;/code&gt; なので、Aを消す時にBを同時に消すことはできません。&lt;/p&gt;
+
+&lt;p&gt;このように、ライブラリの依存関係は複雑なので、簡単に依存含めて一発で消すことはできないようです。&lt;/p&gt;
+
+&lt;h2 id=&quot;composer-update-コマンドをうまく使う&quot;&gt;composer update コマンドをうまく使う&lt;/h2&gt;
+
+&lt;p&gt;このような状況で、使われていないライブラリをうまく消すには、 &lt;code&gt;composer update&lt;/code&gt; コマンドを地道に叩くしかありません。&lt;/p&gt;
+
+&lt;p&gt;A を remove する前に、 composer.lock を見ます。 A が依存しているライブラリを確認します。&lt;/p&gt;
+
+&lt;p&gt;&lt;code&gt;A -&amp;gt; B&lt;/code&gt; と依存していたとします。&lt;/p&gt;
+
+&lt;p&gt;&lt;code&gt;composer remove A&lt;/code&gt; した後に、 &lt;code&gt;composer update B&lt;/code&gt; とすると、 B がどこからも使われていない場合、B が &lt;code&gt;composer.lock&lt;/code&gt; から消えます。&lt;/p&gt;
+
+&lt;p&gt;A が依存していたライブラリに対して、 &lt;code&gt;composer update&lt;/code&gt; を実行していくと、必要なライブラリは残り、不要なライブラリは消えます。&lt;/p&gt;
+
+&lt;h2 id=&quot;composer-update-する場合の注意点&quot;&gt;composer update する場合の注意点&lt;/h2&gt;
+
+&lt;p&gt;&lt;code&gt;A -&amp;gt; B -&amp;gt; C&lt;/code&gt; のように、複雑な依存関係がある場合、 B, C, ... 全ての依存ライブラリに対して &lt;code&gt;composer update&lt;/code&gt; する必要があり、大変です。&lt;/p&gt;
+
+&lt;h1 id=&quot;結論&quot;&gt;結論&lt;/h1&gt;
+
+&lt;ul&gt;
+&lt;li&gt;依存ライブラリが消えなくても気にしない方がいい&lt;/li&gt;
+&lt;li&gt;どうしても消したいなら&lt;code&gt;composer.lock&lt;/code&gt; を生成しなして大掃除するのがよい&lt;/li&gt;
+&lt;/ul&gt;
+
+</description>          <pubDate>Fri, 14 May 2021 07:00:00 +0900</pubDate>
+          <guid isPermalink="false">hatenablog://entry/26006613762201079</guid>
+          
+            <category>PHP</category>
+          
+            <category>プログラミング・開発</category>
+          
+          <enclosure url="https://cdn-ak.f.st-hatena.com/images/fotolife/y/yoshiki_utakata/20210510/20210510220646.png" type="image/png" length="0" />
+        </item>
+      
+    
+      
+      
+        <item>
+          <title>ニンテンドーの Joy-Con を修理に送る時の送り方【ヤマト？レターパック？】</title>
+          <link>https://www.utakata.work/entry/nintendo-switch/howto-send-joycon</link>          <description>&lt;p&gt;&lt;span itemscope itemtype=&quot;http://schema.org/Photograph&quot;&gt;&lt;img src=&quot;https://cdn-ak.f.st-hatena.com/images/fotolife/y/yoshiki_utakata/20200610/20200610111511.png&quot; alt=&quot;f:id:yoshiki_utakata:20200610111511p:plain&quot; title=&quot;&quot; class=&quot;hatena-fotolife&quot; itemprop=&quot;image&quot;&gt;&lt;/span&gt;&lt;/p&gt;
+
+&lt;ul class=&quot;table-of-contents&quot;&gt;
+    &lt;li&gt;&lt;a href=&quot;#Joy-Con-の送り方はいろいろある&quot;&gt;Joy-Con の送り方はいろいろある&lt;/a&gt;&lt;/li&gt;
+    &lt;li&gt;&lt;a href=&quot;#料金で比較&quot;&gt;料金で比較&lt;/a&gt;&lt;/li&gt;
+    &lt;li&gt;&lt;a href=&quot;#僕のおすすめはクロネコヤマトでワレモノ&quot;&gt;僕のおすすめはクロネコヤマトでワレモノ&lt;/a&gt;&lt;/li&gt;
+    &lt;li&gt;&lt;a href=&quot;#それぞれの送り方を詳しく見る&quot;&gt;それぞれの送り方を詳しく見る&lt;/a&gt;&lt;ul&gt;
+            &lt;li&gt;&lt;a href=&quot;#普通郵便&quot;&gt;普通郵便&lt;/a&gt;&lt;/li&gt;
+            &lt;li&gt;&lt;a href=&quot;#レターパックプラスレターパックライト&quot;&gt;レターパックプラス・レターパックライト&lt;/a&gt;&lt;/li&gt;
+            &lt;li&gt;&lt;a href=&quot;#ゆうパッククロネコヤマト&quot;&gt;ゆうパック・クロネコヤマト&lt;/a&gt;&lt;/li&gt;
+        &lt;/ul&gt;
+    &lt;/li&gt;
+    &lt;li&gt;&lt;a href=&quot;#参考記事&quot;&gt;参考記事&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h1 id=&quot;Joy-Con-の送り方はいろいろある&quot;&gt;Joy-Con の送り方はいろいろある&lt;/h1&gt;
+
+&lt;p&gt;Joy-Con を修理してもらうために、ニンテンドーに送る必要があるのですが、どう送るのが一番良いでしょうか。&lt;/p&gt;
+
+&lt;h1 id=&quot;料金で比較&quot;&gt;料金で比較&lt;/h1&gt;
+
+&lt;p&gt;当然普通郵便が安いですが、ちゃんと届くのでしょうか？途中で壊れたりしないのでしょうか。&lt;/p&gt;
+
+&lt;table&gt;
+&lt;thead&gt;
+&lt;tr&gt;
+&lt;th style=&quot;text-align:left;&quot;&gt;送り方&lt;/th&gt;
+&lt;th style=&quot;text-align:left;&quot;&gt;料金&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+&lt;tbody&gt;
+&lt;tr&gt;
+&lt;td style=&quot;text-align:left;&quot;&gt;普通郵便&lt;/td&gt;
+&lt;td style=&quot;text-align:left;&quot;&gt;220円&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&quot;text-align:left;&quot;&gt;レターパックライト&lt;/td&gt;
+&lt;td style=&quot;text-align:left;&quot;&gt;370円&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&quot;text-align:left;&quot;&gt;レターパックプラス&lt;/td&gt;
+&lt;td style=&quot;text-align:left;&quot;&gt;520円&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&quot;text-align:left;&quot;&gt;ゆうパック&lt;/td&gt;
+&lt;td style=&quot;text-align:left;&quot;&gt;850円&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&quot;text-align:left;&quot;&gt;クロネコヤマト&lt;/td&gt;
+&lt;td style=&quot;text-align:left;&quot;&gt;700円程度&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+
+
+&lt;h1 id=&quot;僕のおすすめはクロネコヤマトでワレモノ&quot;&gt;僕のおすすめはクロネコヤマトでワレモノ&lt;/h1&gt;
+
+&lt;p&gt;普通郵便やレターパックは、運送中に壊れるリスクがあるため、それを考えると、数百円払ってゆうパックやクロネコヤマトで送るのが無難でしょう。&lt;/p&gt;
+
+&lt;p&gt;ゆうパックやクロネコヤマトであれば「ワレモノ」指定できますし、追跡可能で、対面お届け、捺印または署名なので、「届かかった」なんてことも少ないです。&lt;/p&gt;
+
+&lt;h1 id=&quot;それぞれの送り方を詳しく見る&quot;&gt;それぞれの送り方を詳しく見る&lt;/h1&gt;
+
+&lt;h2 id=&quot;普通郵便&quot;&gt;普通郵便&lt;/h2&gt;
+
+&lt;p&gt;&lt;span style=&quot;color: #dd830c&quot;&gt;&lt;b&gt;220円&lt;/b&gt;&lt;/span&gt;で送ることができます。「定形外郵便物」の「規格外」の「100g以内」に該当します（実際に郵便局に持っていって、いくらか聞きました）。&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;a href=&quot;https://www.post.japanpost.jp/service/standard/one_price.html&quot;&gt;&amp;#x5B9A;&amp;#x5F62;&amp;#x90F5;&amp;#x4FBF;&amp;#x7269;&amp;#x30FB;&amp;#x5B9A;&amp;#x5F62;&amp;#x5916;&amp;#x90F5;&amp;#x4FBF;&amp;#x7269;&amp;#x306E;&amp;#x6599;&amp;#x91D1; - &amp;#x65E5;&amp;#x672C;&amp;#x90F5;&amp;#x4FBF;&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+
+&lt;p&gt;普通郵便なので、&lt;b&gt;郵送途中で紛失してしまったり、壊れてしまっても保証はありません。&lt;/b&gt;そのかわり安いです。&lt;/p&gt;
+
+&lt;p&gt;箱の厚みは&lt;b&gt;3cm以内&lt;/b&gt;（ポストに入るサイズ）で、かつ封筒に入る必要がるので、薄い箱を用意してください。サイズ制限が厳しいので気をつけてください。&lt;/p&gt;
+
+&lt;p&gt;プチプチに包むなど、&lt;span style=&quot;color: #ff0000&quot;&gt;&lt;b&gt;梱包は厳重に&lt;/b&gt;&lt;/span&gt;してください。普通郵便なので、扱いはかなり雑になると思います。&lt;/p&gt;
+
+&lt;p&gt;僕はこの方法で送って問題ありませんでしたが、あまり保証はできませんし、おすすめもできません。&lt;/p&gt;
+
+&lt;h2 id=&quot;レターパックプラスレターパックライト&quot;&gt;レターパックプラス・レターパックライト&lt;/h2&gt;
+
+&lt;p&gt;これも結局定形外郵便になります。&lt;/p&gt;
+
+&lt;p&gt;&lt;b&gt;レターパックプラス&lt;/b&gt;は、ゆうパックのように対面受け取りで、520円。&lt;b&gt;レターパックライト&lt;/b&gt;はポストに投函する形式で370円です。&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;a href=&quot;https://www.post.japanpost.jp/service/letterpack/&quot;&gt;&amp;#x30EC;&amp;#x30BF;&amp;#x30FC;&amp;#x30D1;&amp;#x30C3;&amp;#x30AF; | &amp;#x65E5;&amp;#x672C;&amp;#x90F5;&amp;#x4FBF;&amp;#x682A;&amp;#x5F0F;&amp;#x4F1A;&amp;#x793E;&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+
+&lt;p&gt;コンビニなどでレターパックの封筒を購入し、箱に入れた Joy-Con を封筒に入れれば OK です。&lt;/p&gt;
+
+&lt;p&gt;レターパックライト370円は、定形外郵便220円とほぼ変わりません。封筒は決められたものを使いますが、&lt;b&gt;厚さ3cmの制限は変わりません。&lt;/b&gt;&lt;/p&gt;
+
+&lt;p&gt;レターパックを使うなら、対面受け取りでサイズの制限も少ない「レターパックプラス」がおすすめですが、ワレモノ指定はできません。公式でも、&lt;b&gt;精密機械を送るのはオススメされていないので、ヤマトで送ったほうがいいでしょう。&lt;/b&gt;&lt;/p&gt;
+
+&lt;h2 id=&quot;ゆうパッククロネコヤマト&quot;&gt;ゆうパック・クロネコヤマト&lt;/h2&gt;
+
+&lt;p&gt;普通の宅配便です。箱のサイズを気にしなくて良く、破損の心配も減りますが、値段は高くなります。&lt;/p&gt;
+
+&lt;p&gt;ゆうパックの場合の東京→京都の送料は850円です。クロネコヤマトの場合、割引を駆使して600円〜700円程度のようです（他ブログの情報を参考にしました）。&lt;/p&gt;
+
+&lt;p&gt;割れ物シールを貼ってもらえれば丁寧に扱ってくれるので、&lt;span style=&quot;color: #0000cc&quot;&gt;&lt;b&gt;一番安心感があります。&lt;/b&gt;&lt;/span&gt;ゆうパックは高いので、クロネコヤマトがおすすめです。&lt;/p&gt;
+
+&lt;h1 id=&quot;参考記事&quot;&gt;参考記事&lt;/h1&gt;
+
+&lt;p&gt;実際に修理に送った時のことを書いた記事もあるので、こちらも参考にしてください。&lt;/p&gt;
+
+&lt;p&gt;&lt;iframe src=&quot;https://hatenablog-parts.com/embed?url=https%3A%2F%2Fwww.utakata.work%2Fentry%2Fgame%2Fnintendo-switch-fix-joy-con&quot; title=&quot;Nintendo Switch の Joy-Con を自分で修理するべきか、任天堂に修理してもらうか - 猫でもわかるWebプログラミングと副業&quot; class=&quot;embed-card embed-blogcard&quot; scrolling=&quot;no&quot; frameborder=&quot;0&quot; style=&quot;display: block; width: 100%; height: 190px; max-width: 500px; margin: 10px 0px;&quot;&gt;&lt;/iframe&gt;&lt;cite class=&quot;hatena-citation&quot;&gt;&lt;a href=&quot;https://www.utakata.work/entry/game/nintendo-switch-fix-joy-con&quot;&gt;www.utakata.work&lt;/a&gt;&lt;/cite&gt;&lt;/p&gt;
+</description>          <pubDate>Thu, 13 May 2021 12:00:00 +0900</pubDate>
+          <guid isPermalink="false">hatenablog://entry/26006613762235864</guid>
+          
+            <category>ライフハック</category>
+          
+            <category>ゲーム</category>
+          
+          <enclosure url="https://cdn-ak.f.st-hatena.com/images/fotolife/y/yoshiki_utakata/20200610/20200610111511.png" type="image/png" length="0" />
+        </item>
+      
+    
+      
+      
+        <item>
+          <title>rclone を使って AWS S3 から Wasabi にファイルを移行</title>
+          <link>https://www.utakata.work/entry/wasabi/rclone-awss3-wasabi</link>          <description>&lt;p&gt;&lt;span itemscope itemtype=&quot;http://schema.org/Photograph&quot;&gt;&lt;img src=&quot;https://cdn-ak.f.st-hatena.com/images/fotolife/y/yoshiki_utakata/20210505/20210505093946.png&quot; alt=&quot;f:id:yoshiki_utakata:20210505093946p:plain&quot; title=&quot;&quot; class=&quot;hatena-fotolife&quot; itemprop=&quot;image&quot;&gt;&lt;/span&gt;&lt;/p&gt;
+
+&lt;ul class=&quot;table-of-contents&quot;&gt;
+    &lt;li&gt;&lt;a href=&quot;#AWS-S3-から他サービスへのオブジェクトストレージにデータを移行する&quot;&gt;AWS S3 から他サービスへのオブジェクトストレージにデータを移行する&lt;/a&gt;&lt;/li&gt;
+    &lt;li&gt;&lt;a href=&quot;#参考ページ&quot;&gt;参考ページ&lt;/a&gt;&lt;/li&gt;
+    &lt;li&gt;&lt;a href=&quot;#rclone-のインストール&quot;&gt;rclone のインストール&lt;/a&gt;&lt;/li&gt;
+    &lt;li&gt;&lt;a href=&quot;#rclone-の設定&quot;&gt;rclone の設定&lt;/a&gt;&lt;/li&gt;
+    &lt;li&gt;&lt;a href=&quot;#ファイルのコピー&quot;&gt;ファイルのコピー&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h1 id=&quot;AWS-S3-から他サービスへのオブジェクトストレージにデータを移行する&quot;&gt;AWS S3 から他サービスへのオブジェクトストレージにデータを移行する&lt;/h1&gt;
+
+&lt;p&gt;今回、私は AWS S3 を脱却して、料金の安い Wasabi に移行しようと思います。&lt;/p&gt;
+
+&lt;p&gt;すでに AWS S3 に多数のファイルが入っているので、データを移行する必要がありますが、 AWS CLI だと異なるサービスのストレージ間でコピーができません。&lt;/p&gt;
+
+&lt;p&gt;そこで、データを移行するためのツール rclone を使って、データ移行を行います。&lt;/p&gt;
+
+&lt;p&gt;&lt;iframe src=&quot;https://hatenablog-parts.com/embed?url=https%3A%2F%2Fgithub.com%2Frclone%2Frclone&quot; title=&quot;rclone/rclone&quot; class=&quot;embed-card embed-webcard&quot; scrolling=&quot;no&quot; frameborder=&quot;0&quot; style=&quot;display: block; width: 100%; height: 155px; max-width: 500px; margin: 10px 0px;&quot;&gt;&lt;/iframe&gt;&lt;cite class=&quot;hatena-citation&quot;&gt;&lt;a href=&quot;https://github.com/rclone/rclone&quot;&gt;github.com&lt;/a&gt;&lt;/cite&gt;&lt;/p&gt;
+
+&lt;h1 id=&quot;参考ページ&quot;&gt;参考ページ&lt;/h1&gt;
+
+&lt;p&gt;DigitalOcean の以下のページを参考に進めます。&lt;/p&gt;
+
+&lt;p&gt;&lt;a href=&quot;https://www.digitalocean.com/community/tutorials/how-to-migrate-from-amazon-s3-to-digitalocean-spaces-with-rclone&quot;&gt;How To Migrate from Amazon S3 to DigitalOcean Spaces with rclone | DigitalOcean&lt;/a&gt;&lt;/p&gt;
+
+&lt;p&gt;DigitalOcean は AWS のようなインフラを提供している会社で、↑の記事は、 DigitalOcean Spaces というオブジェクトストレージに、AWS S3 からファイルをコピーする、という内容になっています。&lt;/p&gt;
+
+&lt;h1 id=&quot;rclone-のインストール&quot;&gt;rclone のインストール&lt;/h1&gt;
+
+&lt;p&gt;インストール方法は、 &lt;a href=&quot;https://rclone.org/install/&quot;&gt;https://rclone.org/install/&lt;/a&gt; に書いてあります。 Mac の場合 &lt;code&gt;brew install rclone&lt;/code&gt; するだけです。&lt;/p&gt;
+
+&lt;pre class=&quot;code&quot; data-lang=&quot;&quot; data-unlink&gt;$ rclone --version
+rclone v1.55.1
+- os/type: darwin
+- os/arch: amd64
+- go/version: go1.16.3
+- go/linking: dynamic
+- go/tags: none&lt;/pre&gt;
+
+
+&lt;h1 id=&quot;rclone-の設定&quot;&gt;rclone の設定&lt;/h1&gt;
+
+&lt;p&gt;rclone configure コマンドで、 rclone の設定ができるので、コピー元とコピー先の S3 の設定を行います。&lt;/p&gt;
+
+&lt;p&gt;最終的な &lt;code&gt;~/.config/rclone/rclone.conf&lt;/code&gt; は以下のようになりました。 access_key_id と secret_access_key の生成方法はここでは省略します。&lt;/p&gt;
+
+&lt;pre class=&quot;code&quot; data-lang=&quot;&quot; data-unlink&gt;[lgtmoon_s3_prod]
+type = s3
+provider = AWS
+env_auth = false
+access_key_id = XXXXX
+secret_access_key = XXXXXXXXXX
+location_constraint = ap-northeast-1
+acl = public-read
+
+[lgtmoon_wasabi_prod]
+type = s3
+provider = Wasabi
+env_auth = false
+access_key_id = XXXXX
+secret_access_key = XXXXXXXXXX
+endpoint = s3.ap-northeast-1-ntt.wasabisys.com
+location_constraint = ap-northeast-1
+acl = public-read&lt;/pre&gt;
+
+
+&lt;h1 id=&quot;ファイルのコピー&quot;&gt;ファイルのコピー&lt;/h1&gt;
+
+&lt;p&gt;では&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;lgtmoon_s3_prod （AWS S3）の &lt;code&gt;image.lgtmoon.dev&lt;/code&gt; バケットから&lt;/li&gt;
+&lt;li&gt;lgtmoon_wasabi_prod （Wasabi）の &lt;code&gt;image.lgtmoon.dev&lt;/code&gt; バケットに&lt;/li&gt;
+&lt;/ul&gt;
+
+
+&lt;p&gt;ファイルをコピーします。&lt;/p&gt;
+
+&lt;pre class=&quot;code&quot; data-lang=&quot;&quot; data-unlink&gt;rclone sync lgtmoon_s3_prod:image.lgtmoon.dev lgtmoon_wasabi_prod:image.lgtmoon.dev&lt;/pre&gt;
+
+
+&lt;p&gt;これでずっと待っていると、コピーが完了します。&lt;/p&gt;
+</description>          <pubDate>Wed, 12 May 2021 07:00:00 +0900</pubDate>
+          <guid isPermalink="false">hatenablog://entry/26006613724722199</guid>
+          
+            <category>AWS</category>
+          
+            <category>プログラミング・開発</category>
+          
+          <enclosure url="https://cdn-ak.f.st-hatena.com/images/fotolife/y/yoshiki_utakata/20210505/20210505093946.png" type="image/png" length="0" />
+        </item>
+      
+    
+      
+      
+        <item>
+          <title>どうぶつ語の音声を作れるツールを公開しました</title>
+          <link>https://www.utakata.work/entry/animal-crossing-voice-generator</link>          <description>&lt;p&gt;&lt;span itemscope itemtype=&quot;http://schema.org/Photograph&quot;&gt;&lt;img src=&quot;https://cdn-ak.f.st-hatena.com/images/fotolife/y/yoshiki_utakata/20210511/20210511180319.png&quot; alt=&quot;f:id:yoshiki_utakata:20210511180319p:plain&quot; title=&quot;&quot; class=&quot;hatena-fotolife&quot; itemprop=&quot;image&quot;&gt;&lt;/span&gt;&lt;/p&gt;
+
+&lt;p&gt;どうぶつの森で、どうぶつがしゃべる時の音&lt;span style=&quot;color: #d32f2f&quot;&gt;&lt;b&gt;&lt;span style=&quot;font-size: 150%&quot;&gt;「どうぶつ語」&lt;/span&gt;&lt;/b&gt;&lt;/span&gt;の音声が生成できるツールを作りました。&lt;/p&gt;
+
+&lt;p&gt;&lt;a href=&quot;https://animal-crossing.utakata.app/&quot;&gt;&amp;#x3069;&amp;#x3046;&amp;#x3076;&amp;#x3064;&amp;#x8A9E;&amp;#x97F3;&amp;#x58F0;&amp;#x30B8;&amp;#x30A7;&amp;#x30CD;&amp;#x30EC;&amp;#x30FC;&amp;#x30BF;&amp;#x30FC;&lt;/a&gt;&lt;/p&gt;
+
+&lt;p&gt;使い方や注意点は、 &lt;a href=&quot;https://animal-crossing.utakata.app/&quot;&gt;https://animal-crossing.utakata.app/&lt;/a&gt; を開くと書いてあります。&lt;/p&gt;
+
+&lt;p&gt;&lt;b&gt;&lt;span style=&quot;color: #0000cc&quot;&gt;音声は動画などに自由に使っていただいて構いません。&lt;/span&gt;&lt;/b&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;b&gt;ニコニ・コモンズ&lt;/b&gt;に登録されていますので、もしニコニコ動画に動画を投稿する際には、親作品として登録してもらえると嬉しいです。&lt;/p&gt;
+
+&lt;p&gt;&lt;iframe src=&quot;https://hatenablog-parts.com/embed?url=https%3A%2F%2Fcommons.nicovideo.jp%2Fmaterial%2Fnc242499&quot; title=&quot;どうぶつ語音声ジェネレーター - ニコニ･コモンズ&quot; class=&quot;embed-card embed-webcard&quot; scrolling=&quot;no&quot; frameborder=&quot;0&quot; style=&quot;display: block; width: 100%; height: 155px; max-width: 500px; margin: 10px 0px;&quot;&gt;&lt;/iframe&gt;&lt;cite class=&quot;hatena-citation&quot;&gt;&lt;a href=&quot;https://commons.nicovideo.jp/material/nc242499&quot;&gt;commons.nicovideo.jp&lt;/a&gt;&lt;/cite&gt;&lt;/p&gt;
+
+&lt;p&gt;まだ不具合などあるかと思います。何かありましたら twitter までご連絡ください。&lt;/p&gt;
+
+&lt;p&gt;&lt;a href=&quot;https://twitter.com/yoshiki_utakata&quot;&gt;https://twitter.com/yoshiki_utakata&lt;/a&gt;&lt;/p&gt;
+
+&lt;h3&gt;使用例&lt;/h3&gt;
+
+&lt;iframe width=&quot;312&quot; height=&quot;176&quot; src=&quot;https://ext.nicovideo.jp/thumb/sm38122327&quot; scrolling=&quot;no&quot; style=&quot;border:solid 1px #CCC;&quot; frameborder=&quot;0&quot;&gt;&lt;/iframe&gt;
+
+
+&lt;h3&gt;スペシャルサンクス&lt;/h3&gt;
+
+&lt;p&gt;このツールを作成するにあたり、こちらの動画を参考にしました。本当にありがとうございます。&lt;/p&gt;
+
+&lt;p&gt;&lt;iframe width=&quot;560&quot; height=&quot;315&quot; src=&quot;https://www.youtube.com/embed/F7hO_Q1kwx0?feature=oembed&quot; frameborder=&quot;0&quot; allow=&quot;accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture&quot; allowfullscreen&gt;&lt;/iframe&gt;&lt;cite class=&quot;hatena-citation&quot;&gt;&lt;a href=&quot;https://www.youtube.com/watch?v=F7hO_Q1kwx0&quot;&gt;www.youtube.com&lt;/a&gt;&lt;/cite&gt;&lt;/p&gt;
+</description>          <pubDate>Tue, 11 May 2021 18:00:00 +0900</pubDate>
+          <guid isPermalink="false">hatenablog://entry/26006613726492896</guid>
+          
+            <category>動画</category>
+          
+            <category>ニコニコ動画・ニコニコ生放送</category>
+          
+            <category>プログラミング・開発</category>
+          
+          <enclosure url="https://cdn-ak.f.st-hatena.com/images/fotolife/y/yoshiki_utakata/20210511/20210511180319.png" type="image/png" length="0" />
+        </item>
+      
+        <item>
+          <title>【2021/04/27】Composer の脆弱性が出たのでアップデートする</title>
+          <link>https://www.utakata.work/entry/2021/05/11/075729</link>          <description>&lt;p&gt;&lt;span itemscope itemtype=&quot;http://schema.org/Photograph&quot;&gt;&lt;img src=&quot;https://cdn-ak.f.st-hatena.com/images/fotolife/y/yoshiki_utakata/20210510/20210510220646.png&quot; alt=&quot;f:id:yoshiki_utakata:20210510220646p:plain&quot; title=&quot;&quot; class=&quot;hatena-fotolife&quot; itemprop=&quot;image&quot;&gt;&lt;/span&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;iframe src=&quot;https://hatenablog-parts.com/embed?url=https%3A%2F%2Fnews.mynavi.jp%2Farticle%2F20210430-1881941%2F&quot; title=&quot;PHPで人気のComposerに脆弱性、アップデートを&quot; class=&quot;embed-card embed-webcard&quot; scrolling=&quot;no&quot; frameborder=&quot;0&quot; style=&quot;display: block; width: 100%; height: 155px; max-width: 500px; margin: 10px 0px;&quot;&gt;&lt;/iframe&gt;&lt;cite class=&quot;hatena-citation&quot;&gt;&lt;a href=&quot;https://news.mynavi.jp/article/20210430-1881941/&quot;&gt;news.mynavi.jp&lt;/a&gt;&lt;/cite&gt;&lt;/p&gt;
+
+&lt;p&gt;脆弱性の詳細ですが、理解しようとするとかなり時間が掛かりそうなので省略します。&lt;/p&gt;
+
+&lt;p&gt;composer のバージョンアップは難しくなく、アプリケーションへの影響も小さいので、サクッとアップデートしましょう。&lt;/p&gt;
+
+&lt;pre class=&quot;code lang-sh&quot; data-lang=&quot;sh&quot; data-unlink&gt;$ composer self-update
+Updating to version &lt;span class=&quot;synConstant&quot;&gt;2&lt;/span&gt;.&lt;span class=&quot;synConstant&quot;&gt;0&lt;/span&gt;.&lt;span class=&quot;synConstant&quot;&gt;13&lt;/span&gt; &lt;span class=&quot;synPreProc&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;synSpecial&quot;&gt;stable channel&lt;/span&gt;&lt;span class=&quot;synPreProc&quot;&gt;)&lt;/span&gt;.
+   Downloading &lt;span class=&quot;synPreProc&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;synConstant&quot;&gt;100&lt;/span&gt;&lt;span class=&quot;synSpecial&quot;&gt;%&lt;/span&gt;&lt;span class=&quot;synPreProc&quot;&gt;)&lt;/span&gt;
+Use composer self-update &lt;span class=&quot;synSpecial&quot;&gt;--rollback&lt;/span&gt; to &lt;span class=&quot;synStatement&quot;&gt;return&lt;/span&gt; to version &lt;span class=&quot;synConstant&quot;&gt;1&lt;/span&gt;.&lt;span class=&quot;synConstant&quot;&gt;9&lt;/span&gt;.&lt;span class=&quot;synConstant&quot;&gt;1&lt;/span&gt;
+&lt;/pre&gt;
+
+
+&lt;p&gt;バージョン 2.0.13 または 1.10.22 になれば、脆弱性修正後のバージョンです。&lt;/p&gt;
+</description>          <pubDate>Tue, 11 May 2021 07:57:29 +0900</pubDate>
+          <guid isPermalink="false">hatenablog://entry/26006613762294382</guid>
+          
+            <category>PHP</category>
+          
+            <category>プログラミング・開発</category>
+          
+          <enclosure url="https://cdn-ak.f.st-hatena.com/images/fotolife/y/yoshiki_utakata/20210510/20210510220646.png" type="image/png" length="0" />
+        </item>
+      
+    
+      
+      
+        <item>
+          <title>オブジェクトストレージ Wasabi で独自ドメインを使う</title>
+          <link>https://www.utakata.work/entry/2021/05/10/070000</link>          <description>&lt;p&gt;&lt;span itemscope itemtype=&quot;http://schema.org/Photograph&quot;&gt;&lt;img src=&quot;https://cdn-ak.f.st-hatena.com/images/fotolife/y/yoshiki_utakata/20210505/20210505132840.png&quot; alt=&quot;f:id:yoshiki_utakata:20210505132840p:plain&quot; title=&quot;&quot; class=&quot;hatena-fotolife&quot; itemprop=&quot;image&quot;&gt;&lt;/span&gt;&lt;/p&gt;
+
+&lt;p&gt;ほぼ AWS S3 と同じです。&lt;/p&gt;
+
+&lt;p&gt;リージョンは &lt;code&gt;ap-northeast-1&lt;/code&gt; です。リージョンが違う場合は設定方法も変わります。&lt;/p&gt;
+
+&lt;p&gt;設定方法&lt;/p&gt;
+
+&lt;ol&gt;
+&lt;li&gt;設定予定のドメイン名でバケットを作成します&lt;/li&gt;
+&lt;li&gt;DNS に CNAME で ドメイン名 → s3.ap-northeast-1.wasabisys.com&lt;/li&gt;
+&lt;li&gt;https://ドメイン名/ファイル名 でアクセスできるようになります&lt;/li&gt;
+&lt;/ol&gt;
+
+
+&lt;p&gt;ドメイン名を指定していない場合は &lt;code&gt;https://s3.ap-northeast-1.wasabisys.com/バケット名/ファイル名&lt;/code&gt; になりますが、独自ドメインの場合は、パス部分にハケット名は入りません。&lt;/p&gt;
+</description>          <pubDate>Mon, 10 May 2021 07:00:00 +0900</pubDate>
+          <guid isPermalink="false">hatenablog://entry/26006613724651165</guid>
+          
+            <category>AWS</category>
+          
+            <category>プログラミング・開発</category>
+          
+          <enclosure url="https://cdn-ak.f.st-hatena.com/images/fotolife/y/yoshiki_utakata/20210505/20210505132840.png" type="image/png" length="0" />
+        </item>
+      
+    
+      
+      
+        <item>
+          <title>【ワーケーション】蔵王国際ホテル（蔵王温泉）でスノーボード＆ワーケーション</title>
+          <link>https://www.utakata.work/entry/work-vacation/yamagata-zao</link>          <description>&lt;p&gt;&lt;span itemscope itemtype=&quot;http://schema.org/Photograph&quot;&gt;&lt;img src=&quot;https://cdn-ak.f.st-hatena.com/images/fotolife/y/yoshiki_utakata/20210506/20210506144423.png&quot; alt=&quot;f:id:yoshiki_utakata:20210506144423p:plain&quot; title=&quot;&quot; class=&quot;hatena-fotolife&quot; itemprop=&quot;image&quot;&gt;&lt;/span&gt;&lt;/p&gt;
+
+&lt;ul class=&quot;table-of-contents&quot;&gt;
+    &lt;li&gt;&lt;a href=&quot;#ワーケーションとは&quot;&gt;ワーケーションとは&lt;/a&gt;&lt;/li&gt;
+    &lt;li&gt;&lt;a href=&quot;#蔵王温泉&quot;&gt;蔵王温泉&lt;/a&gt;&lt;/li&gt;
+    &lt;li&gt;&lt;a href=&quot;#蔵王国際ホテル&quot;&gt;蔵王国際ホテル&lt;/a&gt;&lt;ul&gt;
+            &lt;li&gt;&lt;a href=&quot;#アクセス&quot;&gt;アクセス&lt;/a&gt;&lt;/li&gt;
+        &lt;/ul&gt;
+    &lt;/li&gt;
+    &lt;li&gt;&lt;a href=&quot;#レンタルリフト券&quot;&gt;レンタル・リフト券&lt;/a&gt;&lt;/li&gt;
+    &lt;li&gt;&lt;a href=&quot;#スキー場&quot;&gt;スキー場&lt;/a&gt;&lt;/li&gt;
+    &lt;li&gt;&lt;a href=&quot;#部屋和室&quot;&gt;部屋（和室）&lt;/a&gt;&lt;/li&gt;
+    &lt;li&gt;&lt;a href=&quot;#温泉&quot;&gt;温泉&lt;/a&gt;&lt;/li&gt;
+    &lt;li&gt;&lt;a href=&quot;#夕飯&quot;&gt;夕飯&lt;/a&gt;&lt;/li&gt;
+    &lt;li&gt;&lt;a href=&quot;#ワーケーションの感想&quot;&gt;ワーケーションの感想&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h1 id=&quot;ワーケーションとは&quot;&gt;ワーケーションとは&lt;/h1&gt;
+
+&lt;p&gt;「ワーク」と「バケーション」を組み合わせた言葉で、リゾート地で観光などをしつつ、テレワークで仕事もする、というものです。&lt;/p&gt;
+
+&lt;p&gt;私は休日に副業をしていることが多いため、旅行に行きつつ、宿で働くことが多いです。&lt;/p&gt;
+
+&lt;p&gt;&lt;span itemscope itemtype=&quot;http://schema.org/Photograph&quot;&gt;&lt;img src=&quot;https://cdn-ak.f.st-hatena.com/images/fotolife/y/yoshiki_utakata/20201223/20201223070102.jpg&quot; alt=&quot;f:id:yoshiki_utakata:20201223070102j:plain&quot; title=&quot;&quot; class=&quot;hatena-fotolife&quot; itemprop=&quot;image&quot;&gt;&lt;/span&gt;&lt;/p&gt;
+
+&lt;h1 id=&quot;蔵王温泉&quot;&gt;蔵王温泉&lt;/h1&gt;
+
+&lt;p&gt;蔵王温泉は山形の温泉です。&lt;/p&gt;
+
+&lt;p&gt;時期は3月でした。&lt;/p&gt;
+
+&lt;p&gt;蔵王温泉は「樹氷」でも有名ですが、樹氷は1月〜2月しかみられない（3月だと暖かすぎて見られない）ので、今回の目的はスキーと温泉です。&lt;/p&gt;
+
+&lt;h1 id=&quot;蔵王国際ホテル&quot;&gt;蔵王国際ホテル&lt;/h1&gt;
+
+&lt;p&gt;今回は、ワーケーション + スキーが目的だったので、スキー場のすぐ横にある「蔵王国際ホテル」に泊まりました。&lt;/p&gt;
+
+&lt;p&gt;&lt;iframe src=&quot;https://hatenablog-parts.com/embed?url=https%3A%2F%2Fwww.zao-kokusaihotel.jp%2F&quot; title=&quot;蔵王温泉 蔵王国際ホテル【公式】&quot; class=&quot;embed-card embed-webcard&quot; scrolling=&quot;no&quot; frameborder=&quot;0&quot; style=&quot;display: block; width: 100%; height: 155px; max-width: 500px; margin: 10px 0px;&quot;&gt;&lt;/iframe&gt;&lt;cite class=&quot;hatena-citation&quot;&gt;&lt;a href=&quot;https://www.zao-kokusaihotel.jp/&quot;&gt;www.zao-kokusaihotel.jp&lt;/a&gt;&lt;/cite&gt;&lt;/p&gt;
+
+&lt;p&gt;今回予約した部屋は「【蔵王国際ホテルで1番予約が多いお部屋】和室」&lt;/p&gt;
+
+&lt;p&gt;プランは「選べるメインの山形牛料理プラン」でした。&lt;/p&gt;
+
+&lt;p&gt;朝夕食の2食付きで、の一人1泊2万5千円くらいです。今回は2泊しました。&lt;/p&gt;
+
+&lt;p&gt;&lt;span itemscope itemtype=&quot;http://schema.org/Photograph&quot;&gt;&lt;img src=&quot;https://cdn-ak.f.st-hatena.com/images/fotolife/y/yoshiki_utakata/20210506/20210506164124.png&quot; alt=&quot;f:id:yoshiki_utakata:20210506164124p:plain&quot; title=&quot;&quot; class=&quot;hatena-fotolife&quot; itemprop=&quot;image&quot;&gt;&lt;/span&gt;&lt;/p&gt;
+
+&lt;h2 id=&quot;アクセス&quot;&gt;アクセス&lt;/h2&gt;
+
+&lt;p&gt;山形駅から無料の送迎があります。&lt;/p&gt;
+
+&lt;p&gt;東北新幹線で山形駅 → 送迎で蔵王国際ホテル&lt;/p&gt;
+
+&lt;p&gt;送迎は3日前までに電話で予約が必要です。宿泊時に送迎の時間を選ぶ画面がありましたが、何故か予約されてなかったので、電話するのが無難です。&lt;/p&gt;
+
+&lt;p&gt;送迎の時間はホームページをご確認ください。&lt;a href=&quot;#f-57600af4&quot; name=&quot;fn-57600af4&quot; title=&quot;当時は、東北地方の震災の影響で、新幹線のダイヤが変更になっていたため、新幹線の時間と送迎の時間が合ってなかったです。&quot;&gt;*1&lt;/a&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;span itemscope itemtype=&quot;http://schema.org/Photograph&quot;&gt;&lt;img src=&quot;https://cdn-ak.f.st-hatena.com/images/fotolife/y/yoshiki_utakata/20210506/20210506152902.png&quot; alt=&quot;f:id:yoshiki_utakata:20210506152902p:plain&quot; title=&quot;&quot; class=&quot;hatena-fotolife&quot; itemprop=&quot;image&quot;&gt;&lt;/span&gt;&lt;/p&gt;
+
+&lt;h1 id=&quot;レンタルリフト券&quot;&gt;レンタル・リフト券&lt;/h1&gt;
+
+&lt;p&gt;ボードのレンタルと、リフト券は、蔵王国際ホテルまたはスキー場で購入できますが、ホテルの方が安かったので、ホテルでレンタル＆購入しました。&lt;/p&gt;
+
+&lt;p&gt;値段などは蔵王国際ホテルのホームページにありますので、調べてみてください。&lt;/p&gt;
+
+&lt;h1 id=&quot;スキー場&quot;&gt;スキー場&lt;/h1&gt;
+
+&lt;p&gt;蔵王のスキー場は非常に広いですが、ホテルに最も近いのは「横倉ゲレンデ」です（ホテルから歩いて3分くらいです）。&lt;/p&gt;
+
+&lt;p&gt;&lt;span itemscope itemtype=&quot;http://schema.org/Photograph&quot;&gt;&lt;img src=&quot;https://cdn-ak.f.st-hatena.com/images/fotolife/y/yoshiki_utakata/20210506/20210506155634.png&quot; alt=&quot;f:id:yoshiki_utakata:20210506155634p:plain&quot; title=&quot;&quot; class=&quot;hatena-fotolife&quot; itemprop=&quot;image&quot;&gt;&lt;/span&gt;&lt;/p&gt;
+
+&lt;h1 id=&quot;部屋和室&quot;&gt;部屋（和室）&lt;/h1&gt;
+
+&lt;p&gt;プランで「見晴らし抜群」の南館和室か、普通の和室を選択できるのですが、普通の和室を選択しました。&lt;/p&gt;
+
+&lt;p&gt;見晴らしはそんなに悪くなかったです。（コロナ等の影響で宿泊者が減っているので、いい部屋に当たりやすかったのかもしれません）&lt;/p&gt;
+
+&lt;p&gt;窓から見えてるのは横倉ゲレンデです。滑ってる人が見えます。それくらいゲレンデが近いです。&lt;/p&gt;
+
+&lt;p&gt;座椅子もあったので、個人的には仕事しやすかったです。&lt;/p&gt;
+
+&lt;p&gt;&lt;span itemscope itemtype=&quot;http://schema.org/Photograph&quot;&gt;&lt;img src=&quot;https://cdn-ak.f.st-hatena.com/images/fotolife/y/yoshiki_utakata/20210506/20210506160440.png&quot; alt=&quot;f:id:yoshiki_utakata:20210506160440p:plain&quot; title=&quot;&quot; class=&quot;hatena-fotolife&quot; itemprop=&quot;image&quot;&gt;&lt;/span&gt;&lt;/p&gt;
+
+&lt;h1 id=&quot;温泉&quot;&gt;温泉&lt;/h1&gt;
+
+&lt;p&gt;温泉ですが、酸性度が非常に高く、硫黄の匂いがきついです。ホテルに入った瞬間もすごい硫黄の匂いがします。&lt;/p&gt;
+
+&lt;p&gt;金属製品は錆びてしまうので、PCとの相性はよくないかも。実はワーケーションにはあんまり向いてない気がしました。&lt;/p&gt;
+
+&lt;p&gt;また、体や服に匂いが付きます。あんまりいい服は来ていかないほうが良いかも。返ってきたら服捨てるくらいの気持ちがいいかなと思います。&lt;/p&gt;
+
+&lt;p&gt;蔵王国際ホテルについている温泉は24時間入れます。&lt;/p&gt;
+
+&lt;p&gt;貸切風呂もあります。&lt;/p&gt;
+
+&lt;p&gt;蔵王国際ホテル系列の別のホテルが周りにいくつかあり、そこの温泉なら無料で入ることができます。&lt;/p&gt;
+
+&lt;p&gt;&lt;span itemscope itemtype=&quot;http://schema.org/Photograph&quot;&gt;&lt;img src=&quot;https://cdn-ak.f.st-hatena.com/images/fotolife/y/yoshiki_utakata/20210506/20210506162910.png&quot; alt=&quot;f:id:yoshiki_utakata:20210506162910p:plain&quot; title=&quot;&quot; class=&quot;hatena-fotolife&quot; itemprop=&quot;image&quot;&gt;&lt;/span&gt;&lt;/p&gt;
+
+&lt;h1 id=&quot;夕飯&quot;&gt;夕飯&lt;/h1&gt;
+
+&lt;p&gt;&lt;span itemscope itemtype=&quot;http://schema.org/Photograph&quot;&gt;&lt;img src=&quot;https://cdn-ak.f.st-hatena.com/images/fotolife/y/yoshiki_utakata/20210506/20210506161754.png&quot; alt=&quot;f:id:yoshiki_utakata:20210506161754p:plain&quot; title=&quot;&quot; class=&quot;hatena-fotolife&quot; itemprop=&quot;image&quot;&gt;&lt;/span&gt;&lt;/p&gt;
+
+&lt;h1 id=&quot;ワーケーションの感想&quot;&gt;ワーケーションの感想&lt;/h1&gt;
+
+&lt;p&gt;良かったところ&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;b&gt;24時間温泉に入れる&lt;/b&gt;&lt;/li&gt;
+&lt;li&gt;温泉の種類が多い&lt;/li&gt;
+&lt;li&gt;すぐゲレンデに行ける&lt;/li&gt;
+&lt;li&gt;&lt;b&gt;ホテルでレンタルや着替えができてスキーしやすい&lt;/b&gt;&lt;/li&gt;
+&lt;li&gt;&lt;b&gt;ご飯がおいしい&lt;/b&gt;&lt;/li&gt;
+&lt;li&gt;山形駅から無料の送迎がある&lt;/li&gt;
+&lt;li&gt;とにかく広い（部屋・共用スペース）&lt;/li&gt;
+&lt;li&gt;貸切風呂がある&lt;/li&gt;
+&lt;li&gt;足湯で仕事もできる&lt;/li&gt;
+&lt;/ul&gt;
+
+
+&lt;p&gt;微妙なところ&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;硫黄の匂いがすごい
+
+&lt;ul&gt;
+&lt;li&gt;服が臭くなる&lt;/li&gt;
+&lt;li&gt;PCが硫黄に弱い&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;ワーケーションするには値段は高め
+
+&lt;ul&gt;
+&lt;li&gt;単に観光であれば妥当な値段&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;個人的には座椅子で仕事するの好きだけど、和室だと普通の人は仕事しづらそう&lt;/li&gt;
+&lt;li&gt;ネット環境などは悪い（Wi-Fiあったけど、なぜか繋がらなかった or めちゃめちゃ遅かった）&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;div class=&quot;footnote&quot;&gt;
+&lt;p class=&quot;footnote&quot;&gt;&lt;a href=&quot;#fn-57600af4&quot; name=&quot;f-57600af4&quot; class=&quot;footnote-number&quot;&gt;*1&lt;/a&gt;&lt;span class=&quot;footnote-delimiter&quot;&gt;:&lt;/span&gt;&lt;span class=&quot;footnote-text&quot;&gt;当時は、東北地方の震災の影響で、新幹線のダイヤが変更になっていたため、新幹線の時間と送迎の時間が合ってなかったです。&lt;/span&gt;&lt;/p&gt;
+&lt;/div&gt;</description>          <pubDate>Sat, 08 May 2021 18:00:00 +0900</pubDate>
+          <guid isPermalink="false">hatenablog://entry/26006613725210326</guid>
+          
+            <category>ライフハック</category>
+          
+            <category>副業</category>
+          
+          <enclosure url="https://cdn-ak.f.st-hatena.com/images/fotolife/y/yoshiki_utakata/20210506/20210506144423.png" type="image/png" length="0" />
+        </item>
+      
+    
+      
+      
+        <item>
+          <title>オブジェクトストレージ＆ホスティング（公開）比較【AWS / Wasabi / ConoHa / DigitalOcean】</title>
+          <link>https://www.utakata.work/entry/2021/05/07/070000</link>          <description>&lt;p&gt;&lt;span itemscope itemtype=&quot;http://schema.org/Photograph&quot;&gt;&lt;img src=&quot;https://cdn-ak.f.st-hatena.com/images/fotolife/y/yoshiki_utakata/20210505/20210505093946.png&quot; alt=&quot;f:id:yoshiki_utakata:20210505093946p:plain&quot; title=&quot;&quot; class=&quot;hatena-fotolife&quot; itemprop=&quot;image&quot;&gt;&lt;/span&gt;&lt;/p&gt;
+
+&lt;ul class=&quot;table-of-contents&quot;&gt;
+    &lt;li&gt;&lt;a href=&quot;#オブジェクトストレージを使う目的&quot;&gt;オブジェクトストレージを使う目的&lt;/a&gt;&lt;/li&gt;
+    &lt;li&gt;&lt;a href=&quot;#比較したオブジェクトストレージ&quot;&gt;比較したオブジェクトストレージ&lt;/a&gt;&lt;ul&gt;
+            &lt;li&gt;&lt;a href=&quot;#Wasabi-の概要&quot;&gt;Wasabi の概要&lt;/a&gt;&lt;/li&gt;
+            &lt;li&gt;&lt;a href=&quot;#ConoHa-オブジェクトストレージの概要&quot;&gt;ConoHa オブジェクトストレージの概要&lt;/a&gt;&lt;/li&gt;
+            &lt;li&gt;&lt;a href=&quot;#DigitalOcean-Spaces&quot;&gt;DigitalOcean Spaces&lt;/a&gt;&lt;/li&gt;
+        &lt;/ul&gt;
+    &lt;/li&gt;
+    &lt;li&gt;&lt;a href=&quot;#比較ポイント&quot;&gt;比較ポイント&lt;/a&gt;&lt;/li&gt;
+    &lt;li&gt;&lt;a href=&quot;#ざっくり比較&quot;&gt;ざっくり比較&lt;/a&gt;&lt;/li&gt;
+    &lt;li&gt;&lt;a href=&quot;#各サービスのメリットデメリット&quot;&gt;各サービスのメリット・デメリット&lt;/a&gt;&lt;ul&gt;
+            &lt;li&gt;&lt;a href=&quot;#AWS-S3&quot;&gt;AWS S3&lt;/a&gt;&lt;/li&gt;
+            &lt;li&gt;&lt;a href=&quot;#Wasabi&quot;&gt;Wasabi&lt;/a&gt;&lt;/li&gt;
+            &lt;li&gt;&lt;a href=&quot;#ConoHa-オブジェクトストレージ&quot;&gt;ConoHa オブジェクトストレージ&lt;/a&gt;&lt;/li&gt;
+            &lt;li&gt;&lt;a href=&quot;#DigitalOcean-Spaces-1&quot;&gt;DigitalOcean Spaces&lt;/a&gt;&lt;/li&gt;
+        &lt;/ul&gt;
+    &lt;/li&gt;
+    &lt;li&gt;&lt;a href=&quot;#まとめ&quot;&gt;まとめ&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h1 id=&quot;オブジェクトストレージを使う目的&quot;&gt;オブジェクトストレージを使う目的&lt;/h1&gt;
+
+&lt;p&gt;オブジェクトストレージとは、 AWS S3 みたいなやつだ。&lt;/p&gt;
+
+&lt;p&gt;単にデータを保存するだけの目的から、ホスティング（静的ファイルの配信）にまで使える。&lt;/p&gt;
+
+&lt;p&gt;LGTMoon で画像を保存＆配信するのに、オブジェクトストレージを使う必要があったので、なるべく安く画像を配信すしたい。&lt;/p&gt;
+
+&lt;h1 id=&quot;比較したオブジェクトストレージ&quot;&gt;比較したオブジェクトストレージ&lt;/h1&gt;
+
+&lt;ul&gt;
+&lt;li&gt;AWS S3&lt;/li&gt;
+&lt;li&gt;Wasabi&lt;/li&gt;
+&lt;li&gt;ConoHa オブジェクトストレージ&lt;/li&gt;
+&lt;li&gt;DigitalOcean Spaces&lt;/li&gt;
+&lt;/ul&gt;
+
+
+&lt;p&gt;AWS S3 はみんなご存知だと思うが、それ以外について説明しておく。&lt;/p&gt;
+
+&lt;h2 id=&quot;Wasabi-の概要&quot;&gt;Wasabi の概要&lt;/h2&gt;
+
+&lt;p&gt;Wasabi は、アメリカの Wasabi Technologies が提供するオブジェクトストレージ。「わさび」という名前は日本語っぽいが、海外の会社である。&lt;/p&gt;
+
+&lt;p&gt;日本は NTT PC という会社が仲介するような形でサービスが提供されていて、東京リージョンも存在している。&lt;/p&gt;
+
+&lt;h2 id=&quot;ConoHa-オブジェクトストレージの概要&quot;&gt;ConoHa オブジェクトストレージの概要&lt;/h2&gt;
+
+&lt;p&gt;ConoHa は GMO が提供するオブジェクトストレージで、GMO は日本の会社である。&lt;/p&gt;
+
+&lt;h2 id=&quot;DigitalOcean-Spaces&quot;&gt;DigitalOcean Spaces&lt;/h2&gt;
+
+&lt;p&gt;DigitalOcean はアメリカの企業で、基本的なサービスの内容は AWS と同じ。&lt;/p&gt;
+
+&lt;p&gt;DigitalOcean Spaces というのが、 AWS S3 と同等のものにあたる。&lt;/p&gt;
+
+&lt;p&gt;AWS に比べたらサービス数は少なく、日本リージョンも無いが、AWSより安価で使える。&lt;/p&gt;
+
+&lt;h1 id=&quot;比較ポイント&quot;&gt;比較ポイント&lt;/h1&gt;
+
+&lt;ul&gt;
+&lt;li&gt;料金が安いところを探したい。&lt;/li&gt;
+&lt;li&gt;画像の配信をすることから、通信料金が安い所が良い。&lt;/li&gt;
+&lt;li&gt;利用するストレージ容量は 50GB 以内程度&lt;/li&gt;
+&lt;/ul&gt;
+
+
+&lt;h1 id=&quot;ざっくり比較&quot;&gt;ざっくり比較&lt;/h1&gt;
+
+&lt;table&gt;
+&lt;thead&gt;
+&lt;tr&gt;
+&lt;th style=&quot;text-align:left;&quot;&gt;サービス&lt;/th&gt;
+&lt;th style=&quot;text-align:left;&quot;&gt;ストレージ料金（月額）&lt;/th&gt;
+&lt;th style=&quot;text-align:left;&quot;&gt;通信料金&lt;/th&gt;
+&lt;th style=&quot;text-align:left;&quot;&gt;その他&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+&lt;tbody&gt;
+&lt;tr&gt;
+&lt;td style=&quot;text-align:left;&quot;&gt;AWS S3&lt;/td&gt;
+&lt;td style=&quot;text-align:left;&quot;&gt;$0.023 / GB&lt;/td&gt;
+&lt;td style=&quot;text-align:left;&quot;&gt;$0.09 / GB&lt;/td&gt;
+&lt;td style=&quot;text-align:left;&quot;&gt;開発時の参考文献は多くて安定&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&quot;text-align:left;&quot;&gt;Wasabi&lt;/td&gt;
+&lt;td style=&quot;text-align:left;&quot;&gt;1TB以内なら一律834円&lt;/td&gt;
+&lt;td style=&quot;text-align:left;&quot;&gt;なし&lt;/td&gt;
+&lt;td style=&quot;text-align:left;&quot;&gt;参考文献少ない・日本語非対応&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&quot;text-align:left;&quot;&gt;ConoHa&lt;/td&gt;
+&lt;td style=&quot;text-align:left;&quot;&gt;100GB あたり 450円&lt;/td&gt;
+&lt;td style=&quot;text-align:left;&quot;&gt;なし&lt;/td&gt;
+&lt;td style=&quot;text-align:left;&quot;&gt;日本企業&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&quot;text-align:left;&quot;&gt;DigitalOcean&lt;/td&gt;
+&lt;td style=&quot;text-align:left;&quot;&gt;$0.02 / GB&lt;/td&gt;
+&lt;td style=&quot;text-align:left;&quot;&gt;$0.01 / GB&lt;/td&gt;
+&lt;td style=&quot;text-align:left;&quot;&gt;日本リージョン無し、日本語非対応&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+
+
+&lt;h1 id=&quot;各サービスのメリットデメリット&quot;&gt;各サービスのメリット・デメリット&lt;/h1&gt;
+
+&lt;h2 id=&quot;AWS-S3&quot;&gt;AWS S3&lt;/h2&gt;
+
+&lt;p&gt;最初に AWS S3 を利用したが、月額 $20 （2200円ぐらい）とかなり高額で、S3から他のサーバーへの移行を決心した。&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;❌とにかく通信料金が高すぎる&lt;/li&gt;
+&lt;li&gt;❌日本語ドキュメントは読みづらい&lt;/li&gt;
+&lt;li&gt;❌IAMの管理などが複雑&lt;/li&gt;
+&lt;li&gt;⭕ストレージは $0.023 / GB =&gt; 100GB あたり 250円くらいなので、そこまで高くはない&lt;/li&gt;
+&lt;li&gt;⭕調べると参考文献や実装が大量に出てきて、実装で詰まることは無い&lt;/li&gt;
+&lt;li&gt;⭕安定の AWS でおそらく障害耐性は一番強い&lt;/li&gt;
+&lt;li&gt;⭕terraform に対応している&lt;/li&gt;
+&lt;/ul&gt;
+
+
+&lt;h2 id=&quot;Wasabi&quot;&gt;Wasabi&lt;/h2&gt;
+
+&lt;p&gt;最終的には S3 から Wasabi に移行することにして、実際に使ってみたので、その上でメリット・デメリットを書きます。&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;❌参考文献が少ない。ググって出てくる情報は少ない。&lt;/li&gt;
+&lt;li&gt;❌NTT PC の Web ARENA というサイトを経由してログインする必要があるが、これが非常に面倒くさい&lt;/li&gt;
+&lt;li&gt;❌ストレージサイズが1TB〜なので、そこまでストレージを使わない場合は割高&lt;/li&gt;
+&lt;li&gt;❌AWSのように課金額がすぐにわからない&lt;/li&gt;
+&lt;li&gt;⭕Webの管理ツールなどの使い勝手は結構良い&lt;/li&gt;
+&lt;li&gt;⭕ユーザーとかポリシーの仕組みはAWSを踏襲していて馴染みがある&lt;/li&gt;
+&lt;li&gt;⭕ストレージ単価は激安&lt;/li&gt;
+&lt;li&gt;⭕通信量に課金が無い&lt;/li&gt;
+&lt;li&gt;⭕日本リージョンがある&lt;/li&gt;
+&lt;/ul&gt;
+
+
+&lt;p&gt;ちなみに、1TBを超えたぶんはGB単位で課金されます。&lt;/p&gt;
+
+&lt;h2 id=&quot;ConoHa-オブジェクトストレージ&quot;&gt;ConoHa オブジェクトストレージ&lt;/h2&gt;
+
+&lt;p&gt;今回100GBを超えないため、一番安いはずなのですが、インタフェースが非常に使いづらくてやめました。&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;❌WebのUIは使いづらい&lt;/li&gt;
+&lt;li&gt;❌インタフェースが全体的に使いづらくて非常に分かりづらい&lt;/li&gt;
+&lt;li&gt;❌100GB超えるとWasabiのほうが圧倒的に安い&lt;/li&gt;
+&lt;li&gt;❌ConoHa 自体はS3互換ではない&lt;/li&gt;
+&lt;li&gt;⭕日本企業なので安定感ある&lt;/li&gt;
+&lt;li&gt;⭕通信量に課金が無い&lt;/li&gt;
+&lt;li&gt;⭕100GB未満であればWasabiより安い&lt;/li&gt;
+&lt;li&gt;⭕海外リージョンは無い&lt;/li&gt;
+&lt;/ul&gt;
+
+
+&lt;h2 id=&quot;DigitalOcean-Spaces-1&quot;&gt;DigitalOcean Spaces&lt;/h2&gt;
+
+&lt;ul&gt;
+&lt;li&gt;❌日本語ドキュメントは無い&lt;/li&gt;
+&lt;li&gt;❌日本リージョンが無い&lt;/li&gt;
+&lt;li&gt;❌AWSほど参考文献が豊富ではない&lt;/li&gt;
+&lt;li&gt;⭕基本的な使い勝手はAWSと似ている&lt;/li&gt;
+&lt;li&gt;⭕料金も確実にAWSより安い&lt;/li&gt;
+&lt;li&gt;⭕サーバーとか、マネージドなDBとか、基本的なものは DigitalOcean で全部提供されているので、 DigitalOcean に一本化ができる&lt;/li&gt;
+&lt;/ul&gt;
+
+
+&lt;h1 id=&quot;まとめ&quot;&gt;まとめ&lt;/h1&gt;
+
+&lt;p&gt;最終的に、通信量が安いところかつ、使いやすさでwasabiを選びました。&lt;/p&gt;
+
+&lt;p&gt;通信量がかからないのであれば AWS が安定です。&lt;/p&gt;
+
+&lt;p&gt;とにかく安くしたい場合は Wasabi&lt;/p&gt;
+
+&lt;p&gt;サーバーからDB、オブジェクトストレージまで全部一つのサービスで完結させたいなら DigitalOcean がおすすめです。&lt;/p&gt;
+</description>          <pubDate>Fri, 07 May 2021 07:00:00 +0900</pubDate>
+          <guid isPermalink="false">hatenablog://entry/26006613724458118</guid>
+          
+            <category>AWS</category>
+          
+            <category>プログラミング・開発</category>
+          
+            <category>LGTMoon</category>
+          
+          <enclosure url="https://cdn-ak.f.st-hatena.com/images/fotolife/y/yoshiki_utakata/20210505/20210505093946.png" type="image/png" length="0" />
+        </item>
+      
+    
+      
+      
+        <item>
+          <title>Wasabi で画像をアップロードしてホスティング</title>
+          <link>https://www.utakata.work/entry/2021/05/05/013654</link>          <description>&lt;p&gt;オブジェクトストレージ Wasabi は、アメリカの Wasabi Technologies, Inc. のサービスで、日本では NTT PC 社経由でサービス提供されている感じになります。&lt;/p&gt;
+
+&lt;p&gt;使用感はだいぶ AWS S3 に似ています。NTT PC が提供している Web ARENA と連携してアカウントを作成します。 ap-northeast-1 は Tokyo リージョンになります。&lt;/p&gt;
+
+&lt;p&gt;&lt;span itemscope itemtype=&quot;http://schema.org/Photograph&quot;&gt;&lt;img src=&quot;https://cdn-ak.f.st-hatena.com/images/fotolife/y/yoshiki_utakata/20210504/20210504212045.png&quot; alt=&quot;f:id:yoshiki_utakata:20210504212045p:plain&quot; title=&quot;&quot; class=&quot;hatena-fotolife&quot; itemprop=&quot;image&quot;&gt;&lt;/span&gt;&lt;/p&gt;
+
+&lt;p&gt;Web UI からファイルをアップロードできます。&lt;/p&gt;
+
+&lt;p&gt;&lt;span itemscope itemtype=&quot;http://schema.org/Photograph&quot;&gt;&lt;img src=&quot;https://cdn-ak.f.st-hatena.com/images/fotolife/y/yoshiki_utakata/20210504/20210504212511.png&quot; alt=&quot;f:id:yoshiki_utakata:20210504212511p:plain&quot; title=&quot;&quot; class=&quot;hatena-fotolife&quot; itemprop=&quot;image&quot;&gt;&lt;/span&gt;&lt;/p&gt;
+
+&lt;p&gt;アップロードされた&lt;/p&gt;
+
+&lt;p&gt;&lt;span itemscope itemtype=&quot;http://schema.org/Photograph&quot;&gt;&lt;img src=&quot;https://cdn-ak.f.st-hatena.com/images/fotolife/y/yoshiki_utakata/20210504/20210504213348.png&quot; alt=&quot;f:id:yoshiki_utakata:20210504213348p:plain&quot; title=&quot;&quot; class=&quot;hatena-fotolife&quot; itemprop=&quot;image&quot;&gt;&lt;/span&gt;&lt;/p&gt;
+
+&lt;p&gt;ファイルの詳細から Make Fille Public して、URLにアクセスするとファイルが表示される。&lt;/p&gt;
+
+&lt;p&gt;&lt;span itemscope itemtype=&quot;http://schema.org/Photograph&quot;&gt;&lt;img src=&quot;https://cdn-ak.f.st-hatena.com/images/fotolife/y/yoshiki_utakata/20210504/20210504213936.png&quot; alt=&quot;f:id:yoshiki_utakata:20210504213936p:plain&quot; title=&quot;&quot; class=&quot;hatena-fotolife&quot; itemprop=&quot;image&quot;&gt;&lt;/span&gt;&lt;/p&gt;
+
+&lt;p&gt;AWS S3 と違って、URL は&lt;/p&gt;
+
+&lt;p&gt;&lt;code&gt;https://s3.ap-northeast-1.wasabisys.com/&amp;lt;バケット名&amp;gt;/&amp;lt;ファイル名&amp;gt;&lt;/code&gt;&lt;/p&gt;
+
+&lt;p&gt;のようになる&lt;/p&gt;
+
+&lt;p&gt;（AWS S3 の場合は &lt;code&gt;https://&amp;lt;バケット名&amp;gt;.s3-ap-northeast-1.amazonaws.com/ファイル名&lt;/code&gt; のようになる）&lt;/p&gt;
+</description>          <pubDate>Wed, 05 May 2021 01:36:54 +0900</pubDate>
+          <guid isPermalink="false">hatenablog://entry/26006613724454730</guid>
+          
+            <category>AWS</category>
+          
+            <category>LGTMoon</category>
+          
+            <category>プログラミング・開発</category>
+          
+          <enclosure url="https://cdn-ak.f.st-hatena.com/images/fotolife/y/yoshiki_utakata/20210504/20210504212045.png" type="image/png" length="0" />
+        </item>
+      
+    
+      
+      
+        <item>
+          <title>ITストラテジスト試験 平成29年度 問1 解答と解説</title>
+          <link>https://www.utakata.work/entry/2021/04/17/213019</link>          <description>&lt;h1&gt;問1&lt;/h1&gt;
+
+&lt;p&gt;大型製造業における IoT を活用したビジネスモデル構築に関する次の記述を読んで、設問 1, 2 に答えよ。&lt;/p&gt;
+
+&lt;h2&gt;設問1&lt;/h2&gt;
+
+&lt;p&gt;(1)&lt;/p&gt;
+
+&lt;p&gt;下線部①の直前の部分に、「設計部に対して、製品の設計完了段階で、...」とあるので、
+設計部に対する施策である必要がある。
+設計部の課題は、「A社の課題」の部分から、「部品の標準化や共通化が進んでいないこと」なので、この点を設計レビューによって改善させる旨を書けば良い。&lt;/p&gt;
+
+&lt;p&gt;(2)&lt;/p&gt;
+
+&lt;p&gt;②は、「設計部で行われる設計レビューに、営業部の担当者と、研究部の担当者を混ぜる理由」である。&lt;/p&gt;
+
+&lt;p&gt;営業部に関しては、「A社の課題」の部分で、&lt;/p&gt;
+
+&lt;blockquote&gt;&lt;p&gt;顧客から新機能や機能改善の要求をできる限り受けている&lt;/p&gt;&lt;/blockquote&gt;
+
+&lt;p&gt;とある&lt;/p&gt;
+
+&lt;p&gt;一方、設計部については&lt;/p&gt;
+
+&lt;blockquote&gt;&lt;p&gt;営業部が受けた顧客からの新機能や機能改善の要求についても、技術者の余裕がなく、設計部として迅速に対応できていない&lt;/p&gt;&lt;/blockquote&gt;
+
+&lt;p&gt;とある。&lt;/p&gt;
+
+&lt;p&gt;営業部がレビューに参加する理由は、顧客からの要求についてのレビューをしてもらうためである。&lt;/p&gt;
+
+&lt;p&gt;一方、技術部については、&lt;/p&gt;
+
+&lt;blockquote&gt;&lt;p&gt;今後、どの製品にこのユニットが適用可能かどうかを見極めた上で、できるだけ多くの製品にこのユニットを組み込み......&lt;/p&gt;&lt;/blockquote&gt;
+
+&lt;p&gt;とあるので、&lt;/p&gt;
+
+&lt;p&gt;設計された製品にユニットが適用できないか、という点でレビューに参加してもらうことになる。&lt;/p&gt;
+
+&lt;p&gt;(3)&lt;/p&gt;
+
+&lt;p&gt;製造部に対しての指示である。&lt;/p&gt;
+
+&lt;p&gt;「A社の課題」の製造部の課題で、累積工数が影響してきそうな部分は&lt;/p&gt;
+
+&lt;blockquote&gt;&lt;p&gt;ある工程で製品ごとに必要な工数を累積した工数が稼働可能な要因の総工数を超えてしまい、全体の納期を遅らせる工程......&lt;/p&gt;&lt;/blockquote&gt;
+
+&lt;p&gt;という部分である。&lt;/p&gt;
+
+&lt;p&gt;ボトルネック工程を特定するため、のような解答になる&lt;/p&gt;
+
+&lt;p&gt;(4)&lt;/p&gt;
+
+&lt;p&gt;文章が長くて分かりづらいが、これは製造部に対しての要求である。&lt;/p&gt;
+
+&lt;p&gt;つまり、製造部と営業部で定例的なミーティングをしろ、という話である。&lt;/p&gt;
+
+&lt;p&gt;営業部と製造部の共通する課題は
+「A社の課題」より&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;営業部: 納期遅延のクレームを受けることが多い&lt;/li&gt;
+&lt;li&gt;製造部: 顧客に約束した納期が遅延する大きな要因となっている&lt;/li&gt;
+&lt;/ul&gt;
+
+
+&lt;p&gt;という部分である。&lt;/p&gt;
+
+&lt;p&gt;つまり、顧客に提示する適切な納期について協議すべきである。&lt;/p&gt;
+
+&lt;h2&gt;設問2&lt;/h2&gt;
+
+&lt;p&gt;(1)&lt;/p&gt;
+
+&lt;p&gt;P社の課題と、A社の強みが合致する部分を考える&lt;/p&gt;
+
+&lt;p&gt;P社の課題として、本文の「顧客の現状」をみると&lt;/p&gt;
+
+&lt;blockquote&gt;&lt;p&gt;整備部門を縮小しつつも大型車両の運用を継続できる施策の検討&lt;/p&gt;&lt;/blockquote&gt;
+
+&lt;p&gt;とある。&lt;/p&gt;
+
+&lt;p&gt;一方A社の強みとして、本文の「A社の課題」のES部の部分を読むと&lt;/p&gt;
+
+&lt;blockquote&gt;&lt;p&gt;運転や整備に対する改善対策をしたりしており、顧客に密着した高い品質のサービスを提供することで業界での評判も高い&lt;/p&gt;&lt;/blockquote&gt;
+
+&lt;p&gt;というのがある。&lt;/p&gt;
+
+&lt;p&gt;直後にも&lt;/p&gt;
+
+&lt;blockquote&gt;&lt;p&gt;他社製品への対応を優勝依頼されることも増えてきている。&lt;/p&gt;&lt;/blockquote&gt;
+
+&lt;p&gt;とあるため、
+P社の整備をA社のES部が行う、といった内容になる。&lt;/p&gt;
+
+&lt;p&gt;(2)&lt;/p&gt;
+
+&lt;p&gt;下線部の直前に、「P社の長期的な検討課題に対応するために」とある&lt;/p&gt;
+
+&lt;p&gt;本文「顧客の現状」を読むと、&lt;/p&gt;
+
+&lt;blockquote&gt;&lt;p&gt;長期的な検討課題として、保有する車両の障害による業務の停止を防ぎ、より効率的かつ安定的に運用することを可能にする施策についても検討する必要がある&lt;/p&gt;&lt;/blockquote&gt;
+
+&lt;p&gt;とある&lt;/p&gt;
+
+&lt;p&gt;これに対しA社のES部は、「A社の課題」の部分で&lt;/p&gt;
+
+&lt;blockquote&gt;&lt;p&gt;研究部で開発したユニットを多くの顧客の製品に組み込んでもらい、機器情報を継続的に入手し、障害のノウハウを適用できれば、予防的なMROの提案が可能になると考えている&lt;/p&gt;&lt;/blockquote&gt;
+
+&lt;p&gt;とあるので、この部分が両者で一致する。&lt;/p&gt;
+
+&lt;p&gt;そこで、P社製品にユニットを組み込んでもらい、記録を取ることで予防に活かす、といったの答えになる。&lt;/p&gt;
+
+&lt;h1&gt;ITストラテジスト参考書&lt;/h1&gt;
+
+&lt;p&gt;私は以下の参考書をつかって勉強していますが&lt;/p&gt;
+
+&lt;p&gt;&lt;div class=&quot;hatena-asin-detail&quot;&gt;&lt;a href=&quot;https://www.amazon.co.jp/exec/obidos/ASIN/B0894RFYPB/yoshikiutakat-22/&quot;&gt;&lt;img src=&quot;https://m.media-amazon.com/images/I/51Ygljwk4eL._SL500_.jpg&quot; class=&quot;hatena-asin-detail-image&quot; alt=&quot;令和02-03年 ITストラテジスト 合格教本 情報処理技術者試験&quot; title=&quot;令和02-03年 ITストラテジスト 合格教本 情報処理技術者試験&quot;&gt;&lt;/a&gt;&lt;div class=&quot;hatena-asin-detail-info&quot;&gt;&lt;p class=&quot;hatena-asin-detail-title&quot;&gt;&lt;a href=&quot;https://www.amazon.co.jp/exec/obidos/ASIN/B0894RFYPB/yoshikiutakat-22/&quot;&gt;令和02-03年 ITストラテジスト 合格教本 情報処理技術者試験&lt;/a&gt;&lt;/p&gt;&lt;ul&gt;&lt;li&gt;&lt;span class=&quot;hatena-asin-detail-label&quot;&gt;作者:&lt;/span&gt;&lt;a href=&quot;http://d.hatena.ne.jp/keyword/%B6%E2%BB%D2%20%C2%A7%C9%A7&quot; class=&quot;keyword&quot;&gt;金子 則彦&lt;/a&gt;&lt;/li&gt;&lt;li&gt;&lt;span class=&quot;hatena-asin-detail-label&quot;&gt;発売日:&lt;/span&gt; 2020/05/27&lt;/li&gt;&lt;li&gt;&lt;span class=&quot;hatena-asin-detail-label&quot;&gt;メディア:&lt;/span&gt; Kindle版&lt;/li&gt;&lt;/ul&gt;&lt;/div&gt;&lt;div class=&quot;hatena-asin-detail-foot&quot;&gt;&lt;/div&gt;&lt;/div&gt;&lt;/p&gt;
+
+&lt;p&gt;良いところ&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;午前2の演習のWebページがある&lt;/li&gt;
+&lt;/ul&gt;
+
+
+&lt;p&gt;悪いところ&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;問題の解説が非常に読みづらい&lt;/li&gt;
+&lt;li&gt;午前問題の知識部分の説明が読みづらい&lt;/li&gt;
+&lt;/ul&gt;
+
+
+&lt;p&gt;ということで、全体的にはあまりオススメしないです。&lt;/p&gt;
+</description>          <pubDate>Sat, 17 Apr 2021 21:30:19 +0900</pubDate>
+          <guid isPermalink="false">hatenablog://entry/26006613717359610</guid>
+          
+            <category>ITストラテジスト</category>
+          
+          <enclosure url="https://m.media-amazon.com/images/I/51Ygljwk4eL._SL500_.jpg" type="image/jpeg" length="0" />
+        </item>
+      
+    
+      
+      
+        <item>
+          <title>Windows のボイスレコーダーの録音を Audacity でノイズ除去＆mp3に変換</title>
+          <link>https://www.utakata.work/entry/2021/04/03/132430</link>          <description>&lt;p&gt;&lt;span itemscope itemtype=&quot;http://schema.org/Photograph&quot;&gt;&lt;img src=&quot;https://cdn-ak.f.st-hatena.com/images/fotolife/y/yoshiki_utakata/20210403/20210403112636.png&quot; alt=&quot;f:id:yoshiki_utakata:20210403112636p:plain&quot; title=&quot;&quot; class=&quot;hatena-fotolife&quot; itemprop=&quot;image&quot;&gt;&lt;/span&gt;&lt;/p&gt;
+
+&lt;h1&gt;概要&lt;/h1&gt;
+
+&lt;p&gt;Windows のボイスレコーダーでゲーム実況の音声を録画した場合、拡張子は m4a という形式になります。&lt;/p&gt;
+
+&lt;p&gt;また、ノイズが乗っていたり、録音した音声がモノラルになっていたり&lt;a href=&quot;#f-a7448191&quot; name=&quot;fn-a7448191&quot; title=&quot;もしかしたら私の環境だけかも&quot;&gt;*1&lt;/a&gt;、するので、合わせて修正します。&lt;/p&gt;
+
+&lt;h1&gt;Audacity のインストール&lt;/h1&gt;
+
+&lt;p&gt;こちらからインストーラーをダウンロードしてインストールします。&lt;/p&gt;
+
+&lt;p&gt;執筆時は 3.0.0 が最新版です。&lt;/p&gt;
+
+&lt;p&gt;&lt;iframe src=&quot;https://hatenablog-parts.com/embed?url=https%3A%2F%2Fwww.audacityteam.org%2Fdownload%2F&quot; title=&quot;Download&quot; class=&quot;embed-card embed-webcard&quot; scrolling=&quot;no&quot; frameborder=&quot;0&quot; style=&quot;display: block; width: 100%; height: 155px; max-width: 500px; margin: 10px 0px;&quot;&gt;&lt;/iframe&gt;&lt;cite class=&quot;hatena-citation&quot;&gt;&lt;a href=&quot;https://www.audacityteam.org/download/&quot;&gt;www.audacityteam.org&lt;/a&gt;&lt;/cite&gt;&lt;/p&gt;
+
+&lt;h1&gt;FFmpeg のインストール&lt;/h1&gt;
+
+&lt;p&gt;Audacity で m4a を編集するには、FFmpeg というソフトが必要になります。FFmpeg は、動画ファイルや音声ファイルの編集ができる有名なソフトウェアで、Audactiy から FFmpeg を利用することで、 m4a 音声の編集ができるようになります。&lt;/p&gt;
+
+&lt;p&gt;Audacity から使われる FFMpeg はバージョン 2.2.2 である必要があるっぽいです。下記サイトから、 「ffmpeg-win-2.2.2.zip」というのを探して、ダウンロードします。&lt;/p&gt;
+
+&lt;p&gt;&lt;a href=&quot;https://lame.buanzo.org/#lamewindl&quot;&gt;https://lame.buanzo.org/#lamewindl&lt;/a&gt;&lt;/p&gt;
+
+&lt;p&gt;ダウンロードしたら、解凍して、わかりやすい場所においておきます。&lt;/p&gt;
+
+&lt;p&gt;Audacity を開き、メニューの「編集」→「環境設定」を開きます。&lt;/p&gt;
+
+&lt;p&gt;「ライブラリ」を選択し、「場所を指定」をクリック。先程ダウンロードした FFmpeg のファイルの中に含まれる「avformat-55.dll」を指定します。&lt;/p&gt;
+
+&lt;p&gt;&lt;span itemscope itemtype=&quot;http://schema.org/Photograph&quot;&gt;&lt;img src=&quot;https://cdn-ak.f.st-hatena.com/images/fotolife/y/yoshiki_utakata/20210403/20210403115013.png&quot; alt=&quot;f:id:yoshiki_utakata:20210403115013p:plain&quot; title=&quot;&quot; class=&quot;hatena-fotolife&quot; itemprop=&quot;image&quot;&gt;&lt;/span&gt;&lt;/p&gt;
+
+&lt;p&gt;すると m4a ファイルを読み込んでくれるようになります。&lt;/p&gt;
+
+&lt;h1&gt;音量の調整をしてノイズを消す&lt;/h1&gt;
+
+&lt;p&gt;音声ファイルを読み込んだら、 Control + A で全選択して、メニューの「エフェクト」→「増幅」を選択して「OK」を押します。これで、選択範囲の音量が大きくなります。&lt;/p&gt;
+
+&lt;p&gt;しかし、音量を大きくすると、「サー」といった、ノイズも多くなってしまいます。&lt;/p&gt;
+
+&lt;p&gt;そこで、喋っていない範囲を選択したうえで、&lt;/p&gt;
+
+&lt;p&gt;&lt;span itemscope itemtype=&quot;http://schema.org/Photograph&quot;&gt;&lt;img src=&quot;https://cdn-ak.f.st-hatena.com/images/fotolife/y/yoshiki_utakata/20210403/20210403131650.png&quot; alt=&quot;f:id:yoshiki_utakata:20210403131650p:plain&quot; title=&quot;&quot; class=&quot;hatena-fotolife&quot; itemprop=&quot;image&quot;&gt;&lt;/span&gt;&lt;/p&gt;
+
+&lt;p&gt;メニューの「エフェクト」→「ノイズの低減」で、「ノイズプロファイルの取得」をクリックしてください。&lt;/p&gt;
+
+&lt;p&gt;その後、音声全体を選択下状態で、「エフェクト」→「ノイズの低減」で、「OK」をクリックしてください。&lt;/p&gt;
+
+&lt;p&gt;これでノイズが除去されます。&lt;/p&gt;
+
+&lt;p&gt;ノイズが消えきらない場合は、プロファイルの取得→もう一回ノイズの低減　の手順を繰り返してください。&lt;/p&gt;
+
+&lt;h1&gt;mp3で保存&lt;/h1&gt;
+
+&lt;p&gt;今回の音声は、ノイズのプロファイルの取得のために、無音の空間が長いです。&lt;/p&gt;
+
+&lt;p&gt;そこで、喋っている部分だけ選択し、メニューの「ファイル」→「書き出し」→「選択した音声の書き出し」を選びます。&lt;/p&gt;
+
+&lt;p&gt;&lt;span itemscope itemtype=&quot;http://schema.org/Photograph&quot;&gt;&lt;img src=&quot;https://cdn-ak.f.st-hatena.com/images/fotolife/y/yoshiki_utakata/20210403/20210403132102.png&quot; alt=&quot;f:id:yoshiki_utakata:20210403132102p:plain&quot; title=&quot;&quot; class=&quot;hatena-fotolife&quot; itemprop=&quot;image&quot;&gt;&lt;/span&gt;&lt;/p&gt;
+
+&lt;p&gt;僕の場合は&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;ファイルの種類: MP3ファイル&lt;/li&gt;
+&lt;li&gt;ビットレート固定&lt;/li&gt;
+&lt;li&gt;192 kbps&lt;/li&gt;
+&lt;li&gt;チャンネルモード: モノラルに強制&lt;/li&gt;
+&lt;/ul&gt;
+
+
+&lt;p&gt;を選択して保存します。&lt;/p&gt;
+
+&lt;p&gt;&lt;span itemscope itemtype=&quot;http://schema.org/Photograph&quot;&gt;&lt;img src=&quot;https://cdn-ak.f.st-hatena.com/images/fotolife/y/yoshiki_utakata/20210403/20210403132156.png&quot; alt=&quot;f:id:yoshiki_utakata:20210403132156p:plain&quot; title=&quot;&quot; class=&quot;hatena-fotolife&quot; itemprop=&quot;image&quot;&gt;&lt;/span&gt;&lt;/p&gt;
+
+&lt;p&gt;これで、m4aファイルを mp3 に変換した上で、ノイズを除去し、モノラルにして保存することができます。&lt;/p&gt;
+
+&lt;p&gt;Audacity は音声の編集に便利ですし、mp3 に変換することで、 Adobe Premiere などでも読めるようになるので、非常によいです。オススメです。&lt;/p&gt;
+
+&lt;h1&gt;参考サイト&lt;/h1&gt;
+
+&lt;p&gt;&lt;iframe src=&quot;https://hatenablog-parts.com/embed?url=http%3A%2F%2Fcyoroq.blog.fc2.com%2Fblog-entry-91.html&quot; title=&quot;拡張子m4aをAudacityでwavまたはmp3に変換しよう！！&quot; class=&quot;embed-card embed-webcard&quot; scrolling=&quot;no&quot; frameborder=&quot;0&quot; style=&quot;display: block; width: 100%; height: 155px; max-width: 500px; margin: 10px 0px;&quot;&gt;&lt;/iframe&gt;&lt;cite class=&quot;hatena-citation&quot;&gt;&lt;a href=&quot;http://cyoroq.blog.fc2.com/blog-entry-91.html&quot;&gt;cyoroq.blog.fc2.com&lt;/a&gt;&lt;/cite&gt;&lt;/p&gt;
+&lt;div class=&quot;footnote&quot;&gt;
+&lt;p class=&quot;footnote&quot;&gt;&lt;a href=&quot;#fn-a7448191&quot; name=&quot;f-a7448191&quot; class=&quot;footnote-number&quot;&gt;*1&lt;/a&gt;&lt;span class=&quot;footnote-delimiter&quot;&gt;:&lt;/span&gt;&lt;span class=&quot;footnote-text&quot;&gt;もしかしたら私の環境だけかも&lt;/span&gt;&lt;/p&gt;
+&lt;/div&gt;</description>          <pubDate>Sat, 03 Apr 2021 13:24:30 +0900</pubDate>
+          <guid isPermalink="false">hatenablog://entry/26006613711737357</guid>
+          
+            <category>ライフハック</category>
+          
+            <category>動画</category>
+          
+          <enclosure url="https://cdn-ak.f.st-hatena.com/images/fotolife/y/yoshiki_utakata/20210403/20210403112636.png" type="image/png" length="0" />
+        </item>
+      
+    
+      
+      
+        <item>
+          <title>【Go 言語】 Docker 上 で Gin を動かすまで</title>
+          <link>https://www.utakata.work/entry//golang/tutorial/2-docker-go-gin</link>          <description>&lt;p&gt;&lt;span itemscope itemtype=&quot;http://schema.org/Photograph&quot;&gt;&lt;img src=&quot;https://cdn-ak.f.st-hatena.com/images/fotolife/y/yoshiki_utakata/20210324/20210324115308.png&quot; alt=&quot;f:id:yoshiki_utakata:20210324115308p:plain&quot; title=&quot;&quot; class=&quot;hatena-fotolife&quot; itemprop=&quot;image&quot;&gt;&lt;/span&gt;&lt;/p&gt;
+
+&lt;ul class=&quot;table-of-contents&quot;&gt;
+    &lt;li&gt;&lt;a href=&quot;#前回の復習&quot;&gt;前回の復習&lt;/a&gt;&lt;/li&gt;
+    &lt;li&gt;&lt;a href=&quot;#gomod-とは&quot;&gt;go.mod とは&lt;/a&gt;&lt;/li&gt;
+    &lt;li&gt;&lt;a href=&quot;#go-mod-を使って-gin-をインストール&quot;&gt;go mod を使って gin をインストール&lt;/a&gt;&lt;/li&gt;
+    &lt;li&gt;&lt;a href=&quot;#Dockerfile-の修正&quot;&gt;Dockerfile の修正&lt;/a&gt;&lt;/li&gt;
+    &lt;li&gt;&lt;a href=&quot;#gin-を起動するコードを書く&quot;&gt;gin を起動するコードを書く&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h1 id=&quot;前回の復習&quot;&gt;前回の復習&lt;/h1&gt;
+
+&lt;p&gt;前回は、 Docker 上で Go を動かすまでやりました。まだ読んでないひとは読んでください。&lt;/p&gt;
+
+&lt;p&gt;&lt;iframe src=&quot;https://hatenablog-parts.com/embed?url=https%3A%2F%2Fwww.utakata.work%2Fentry%2Fgolang%2Ftutorial%2F1&quot; title=&quot;Docker 上で main.go を動かす（Goの開発環境を作る） - 猫でもわかるWebプログラミング&quot; class=&quot;embed-card embed-blogcard&quot; scrolling=&quot;no&quot; frameborder=&quot;0&quot; style=&quot;display: block; width: 100%; height: 190px; max-width: 500px; margin: 10px 0px;&quot;&gt;&lt;/iframe&gt;&lt;cite class=&quot;hatena-citation&quot;&gt;&lt;a href=&quot;https://www.utakata.work/entry/golang/tutorial/1&quot;&gt;www.utakata.work&lt;/a&gt;&lt;/cite&gt;&lt;/p&gt;
+
+&lt;h1 id=&quot;gomod-とは&quot;&gt;go.mod とは&lt;/h1&gt;
+
+&lt;p&gt;go.mod は、 PHP の composer.json や JavaScript の package.json のような、
+ライブラリを管理するファイルです。&lt;/p&gt;
+
+&lt;p&gt;リポジトリルートに go.mod ファイルを作成します。
+Docker コンテナ内で &lt;code&gt;go mod init &amp;lt;モジュール名&amp;gt;&lt;/code&gt; します。&lt;/p&gt;
+
+&lt;p&gt;通常、モジュール名は、GitHubのリポジトリのURLにします。
+&lt;code&gt;go mod init github.com/yoshikyoto/sample&lt;/code&gt; みたいな感じにします。&lt;/p&gt;
+
+&lt;p&gt;すると、&lt;code&gt;go.mod&lt;/code&gt; ファイルができます。
+最初は Go のバージョンだけが記載されています。&lt;/p&gt;
+
+&lt;pre class=&quot;code lang-sh&quot; data-lang=&quot;sh&quot; data-unlink&gt;module github.com/yoshikyoto/sample
+
+go &lt;span class=&quot;synConstant&quot;&gt;1&lt;/span&gt;.&lt;span class=&quot;synConstant&quot;&gt;16&lt;/span&gt;
+&lt;/pre&gt;
+
+
+&lt;h1 id=&quot;go-mod-を使って-gin-をインストール&quot;&gt;go mod を使って gin をインストール&lt;/h1&gt;
+
+&lt;p&gt;go get コマンドを使います。&lt;/p&gt;
+
+&lt;pre class=&quot;code lang-sh&quot; data-lang=&quot;sh&quot; data-unlink&gt;$ go get &lt;span class=&quot;synSpecial&quot;&gt;-u&lt;/span&gt; github.com/gin-gonic/gin
+&lt;/pre&gt;
+
+
+&lt;p&gt;すると、 go.mod にライブラリの依存関係が追加されます。&lt;/p&gt;
+
+&lt;pre class=&quot;code lang-sh&quot; data-lang=&quot;sh&quot; data-unlink&gt;module sidejob
+
+go &lt;span class=&quot;synConstant&quot;&gt;1&lt;/span&gt;.&lt;span class=&quot;synConstant&quot;&gt;16&lt;/span&gt;
+
+require &lt;span class=&quot;synPreProc&quot;&gt;(&lt;/span&gt;
+&lt;span class=&quot;synSpecial&quot;&gt;   github.com/gin-gonic/gin v1.&lt;/span&gt;&lt;span class=&quot;synConstant&quot;&gt;6&lt;/span&gt;&lt;span class=&quot;synSpecial&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;synConstant&quot;&gt;3&lt;/span&gt;&lt;span class=&quot;synSpecial&quot;&gt; // indirect&lt;/span&gt;
+&lt;span class=&quot;synSpecial&quot;&gt;   github.com/go-playground/validator/v10 v10.&lt;/span&gt;&lt;span class=&quot;synConstant&quot;&gt;4&lt;/span&gt;&lt;span class=&quot;synSpecial&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;synConstant&quot;&gt;1&lt;/span&gt;&lt;span class=&quot;synSpecial&quot;&gt; // indirect&lt;/span&gt;
+&lt;span class=&quot;synSpecial&quot;&gt;   github.com/golang/protobuf v1.&lt;/span&gt;&lt;span class=&quot;synConstant&quot;&gt;5&lt;/span&gt;&lt;span class=&quot;synSpecial&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;synConstant&quot;&gt;1&lt;/span&gt;&lt;span class=&quot;synSpecial&quot;&gt; // indirect&lt;/span&gt;
+&lt;span class=&quot;synSpecial&quot;&gt;   github.com/json-iterator/go v1.&lt;/span&gt;&lt;span class=&quot;synConstant&quot;&gt;1&lt;/span&gt;&lt;span class=&quot;synSpecial&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;synConstant&quot;&gt;10&lt;/span&gt;&lt;span class=&quot;synSpecial&quot;&gt; // indirect&lt;/span&gt;
+&lt;span class=&quot;synSpecial&quot;&gt;   github.com/leodido/go-urn v1.&lt;/span&gt;&lt;span class=&quot;synConstant&quot;&gt;2&lt;/span&gt;&lt;span class=&quot;synSpecial&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;synConstant&quot;&gt;1&lt;/span&gt;&lt;span class=&quot;synSpecial&quot;&gt; // indirect&lt;/span&gt;
+&lt;span class=&quot;synSpecial&quot;&gt;   github.com/modern-go/concurrent v0.&lt;/span&gt;&lt;span class=&quot;synConstant&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;synSpecial&quot;&gt;.0-20180306012644-bacd9c7ef1dd // indirect&lt;/span&gt;
+&lt;span class=&quot;synSpecial&quot;&gt;   github.com/modern-go/reflect2 v1.&lt;/span&gt;&lt;span class=&quot;synConstant&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;synSpecial&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;synConstant&quot;&gt;1&lt;/span&gt;&lt;span class=&quot;synSpecial&quot;&gt; // indirect&lt;/span&gt;
+&lt;span class=&quot;synSpecial&quot;&gt;   github.com/ugorji/go v1.&lt;/span&gt;&lt;span class=&quot;synConstant&quot;&gt;2&lt;/span&gt;&lt;span class=&quot;synSpecial&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;synConstant&quot;&gt;4&lt;/span&gt;&lt;span class=&quot;synSpecial&quot;&gt; // indirect&lt;/span&gt;
+&lt;span class=&quot;synSpecial&quot;&gt;   golang.org/x/crypto v0.&lt;/span&gt;&lt;span class=&quot;synConstant&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;synSpecial&quot;&gt;.0-20210322153248-0c34fe9e7dc2 // indirect&lt;/span&gt;
+&lt;span class=&quot;synSpecial&quot;&gt;   golang.org/x/sys v0.&lt;/span&gt;&lt;span class=&quot;synConstant&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;synSpecial&quot;&gt;.0-20210320140829-1e4c9ba3b0c4 // indirect&lt;/span&gt;
+&lt;span class=&quot;synSpecial&quot;&gt;   gopkg.in/yaml.v2 v2.&lt;/span&gt;&lt;span class=&quot;synConstant&quot;&gt;4&lt;/span&gt;&lt;span class=&quot;synSpecial&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;synConstant&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;synSpecial&quot;&gt; // indirect&lt;/span&gt;
+&lt;span class=&quot;synPreProc&quot;&gt;)&lt;/span&gt;
+&lt;/pre&gt;
+
+
+&lt;h1 id=&quot;Dockerfile-の修正&quot;&gt;Dockerfile の修正&lt;/h1&gt;
+
+&lt;p&gt;このままだと、docker-compose down すると、インストールされていた gin が消えてしまいます。&lt;/p&gt;
+
+&lt;p&gt;そこで、 Dockerfile で gin がインストールされるようにします。&lt;/p&gt;
+
+&lt;p&gt;Go のディレクトリ構成スタンダートを参考にして&lt;/p&gt;
+
+&lt;p&gt;&lt;a href=&quot;https://github.com/golang-standards/project-layout/blob/master/README_ja.md&quot;&gt;https://github.com/golang-standards/project-layout/blob/master/README_ja.md&lt;/a&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;code&gt;build&lt;/code&gt; ディレクトリの下に &lt;code&gt;Dockerfile&lt;/code&gt; を作成します。&lt;/p&gt;
+
+&lt;pre class=&quot;code Dockerfile&quot; data-lang=&quot;Dockerfile&quot; data-unlink&gt;FROM golang:1.16
+
+COPY go.mod /code/go.mod
+COPY go.sum /code/go.sum
+WORKDIR /code
+RUN ls
+RUN go mod download
+
+COPY . /code
+
+CMD go run main.go&lt;/pre&gt;
+
+
+&lt;p&gt;そして docker-compose.yml で&lt;/p&gt;
+
+&lt;pre class=&quot;code lang-yaml&quot; data-lang=&quot;yaml&quot; data-unlink&gt;&lt;span class=&quot;synIdentifier&quot;&gt;version&lt;/span&gt;&lt;span class=&quot;synSpecial&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;synConstant&quot;&gt;&amp;quot;3&amp;quot;&lt;/span&gt;
+&lt;span class=&quot;synIdentifier&quot;&gt;services&lt;/span&gt;&lt;span class=&quot;synSpecial&quot;&gt;:&lt;/span&gt;
+  &lt;span class=&quot;synIdentifier&quot;&gt;app&lt;/span&gt;&lt;span class=&quot;synSpecial&quot;&gt;:&lt;/span&gt;
+    &lt;span class=&quot;synIdentifier&quot;&gt;container_name&lt;/span&gt;&lt;span class=&quot;synSpecial&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;synConstant&quot;&gt;&amp;quot;app&amp;quot;&lt;/span&gt;
+    &lt;span class=&quot;synIdentifier&quot;&gt;volumes&lt;/span&gt;&lt;span class=&quot;synSpecial&quot;&gt;:&lt;/span&gt;
+      &lt;span class=&quot;synStatement&quot;&gt;- &lt;/span&gt;./:/code
+    &lt;span class=&quot;synIdentifier&quot;&gt;tty&lt;/span&gt;&lt;span class=&quot;synSpecial&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;synConstant&quot;&gt;true&lt;/span&gt;
+    &lt;span class=&quot;synIdentifier&quot;&gt;command&lt;/span&gt;&lt;span class=&quot;synSpecial&quot;&gt;:&lt;/span&gt; /bin/bash
+    &lt;span class=&quot;synIdentifier&quot;&gt;build&lt;/span&gt;&lt;span class=&quot;synSpecial&quot;&gt;:&lt;/span&gt;
+      &lt;span class=&quot;synIdentifier&quot;&gt;context&lt;/span&gt;&lt;span class=&quot;synSpecial&quot;&gt;:&lt;/span&gt; .
+      &lt;span class=&quot;synIdentifier&quot;&gt;dockerfile&lt;/span&gt;&lt;span class=&quot;synSpecial&quot;&gt;:&lt;/span&gt; build/Dockerfile
+&lt;/pre&gt;
+
+
+&lt;p&gt;これで、 &lt;code&gt;docker-compose up -d --build&lt;/code&gt; とすれば、 Docker をビルドしつつ立ち上げてくれます。&lt;/p&gt;
+
+&lt;h1 id=&quot;gin-を起動するコードを書く&quot;&gt;gin を起動するコードを書く&lt;/h1&gt;
+
+&lt;p&gt;main.go を変更します。&lt;/p&gt;
+
+&lt;pre class=&quot;code lang-go&quot; data-lang=&quot;go&quot; data-unlink&gt;&lt;span class=&quot;synStatement&quot;&gt;package&lt;/span&gt; main
+
+&lt;span class=&quot;synStatement&quot;&gt;import&lt;/span&gt; &lt;span class=&quot;synConstant&quot;&gt;&amp;quot;github.com/gin-gonic/gin&amp;quot;&lt;/span&gt;
+
+&lt;span class=&quot;synStatement&quot;&gt;import&lt;/span&gt; &lt;span class=&quot;synConstant&quot;&gt;&amp;quot;net/http&amp;quot;&lt;/span&gt;
+
+&lt;span class=&quot;synStatement&quot;&gt;func&lt;/span&gt; main() {
+    engine:= gin.Default()
+    engine.GET(&lt;span class=&quot;synConstant&quot;&gt;&amp;quot;/&amp;quot;&lt;/span&gt;, &lt;span class=&quot;synType&quot;&gt;func&lt;/span&gt;(c *gin.Context) {
+        c.JSON(http.StatusOK, gin.H{
+            &lt;span class=&quot;synConstant&quot;&gt;&amp;quot;message&amp;quot;&lt;/span&gt;: &lt;span class=&quot;synConstant&quot;&gt;&amp;quot;hello world&amp;quot;&lt;/span&gt;,
+        })
+    })
+    engine.Run(&lt;span class=&quot;synConstant&quot;&gt;&amp;quot;:3000&amp;quot;&lt;/span&gt;)
+}
+&lt;/pre&gt;
+
+
+&lt;p&gt;docker-compose.yml に書いてある command の部分を消して、
+Dockerfile に書いてある &lt;code&gt;go run main.go&lt;/code&gt; が実行されるようにします。&lt;/p&gt;
+
+&lt;p&gt;また、ポート 3000 にアクセスできるようにします。&lt;/p&gt;
+
+&lt;pre class=&quot;code lang-yaml&quot; data-lang=&quot;yaml&quot; data-unlink&gt;&lt;span class=&quot;synIdentifier&quot;&gt;version&lt;/span&gt;&lt;span class=&quot;synSpecial&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;synConstant&quot;&gt;&amp;quot;3&amp;quot;&lt;/span&gt;
+&lt;span class=&quot;synIdentifier&quot;&gt;services&lt;/span&gt;&lt;span class=&quot;synSpecial&quot;&gt;:&lt;/span&gt;
+  &lt;span class=&quot;synIdentifier&quot;&gt;app&lt;/span&gt;&lt;span class=&quot;synSpecial&quot;&gt;:&lt;/span&gt;
+    &lt;span class=&quot;synIdentifier&quot;&gt;container_name&lt;/span&gt;&lt;span class=&quot;synSpecial&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;synConstant&quot;&gt;&amp;quot;app&amp;quot;&lt;/span&gt;
+    &lt;span class=&quot;synIdentifier&quot;&gt;volumes&lt;/span&gt;&lt;span class=&quot;synSpecial&quot;&gt;:&lt;/span&gt;
+      &lt;span class=&quot;synStatement&quot;&gt;- &lt;/span&gt;./:/code
+    &lt;span class=&quot;synIdentifier&quot;&gt;tty&lt;/span&gt;&lt;span class=&quot;synSpecial&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;synConstant&quot;&gt;true&lt;/span&gt;
+    &lt;span class=&quot;synIdentifier&quot;&gt;build&lt;/span&gt;&lt;span class=&quot;synSpecial&quot;&gt;:&lt;/span&gt;
+      &lt;span class=&quot;synIdentifier&quot;&gt;context&lt;/span&gt;&lt;span class=&quot;synSpecial&quot;&gt;:&lt;/span&gt; .
+      &lt;span class=&quot;synIdentifier&quot;&gt;dockerfile&lt;/span&gt;&lt;span class=&quot;synSpecial&quot;&gt;:&lt;/span&gt; build/Dockerfile
+    &lt;span class=&quot;synIdentifier&quot;&gt;ports&lt;/span&gt;&lt;span class=&quot;synSpecial&quot;&gt;:&lt;/span&gt;
+      &lt;span class=&quot;synStatement&quot;&gt;- &lt;/span&gt;3000:3000
+&lt;/pre&gt;
+
+
+&lt;p&gt;これで、 &lt;code&gt;docker-compose up -d&lt;/code&gt; してから localhost:3000 にアクセスすると
+HTTP レスポンスが返ってきます。&lt;/p&gt;
+
+&lt;p&gt;docker-compose up してから gin が立ち上がるのに結構時間がかかるので、ちょっと長めに待ってください。&lt;/p&gt;
+</description>          <pubDate>Mon, 29 Mar 2021 07:00:00 +0900</pubDate>
+          <guid isPermalink="false">hatenablog://entry/26006613708526859</guid>
+          
+            <category>Go言語</category>
+          
+            <category>Docker</category>
+          
+            <category>プログラミング・開発</category>
+          
+          <enclosure url="https://cdn-ak.f.st-hatena.com/images/fotolife/y/yoshiki_utakata/20210324/20210324115308.png" type="image/png" length="0" />
+        </item>
+      
+    
+      
+      
+        <item>
+          <title>Docker 上で main.go を動かす（Goの開発環境を作る）</title>
+          <link>https://www.utakata.work/entry/golang/tutorial/1</link>          <description>&lt;p&gt;&lt;span itemscope itemtype=&quot;http://schema.org/Photograph&quot;&gt;&lt;img src=&quot;https://cdn-ak.f.st-hatena.com/images/fotolife/y/yoshiki_utakata/20210324/20210324115308.png&quot; alt=&quot;f:id:yoshiki_utakata:20210324115308p:plain&quot; title=&quot;&quot; class=&quot;hatena-fotolife&quot; itemprop=&quot;image&quot;&gt;&lt;/span&gt;&lt;/p&gt;
+
+&lt;ul class=&quot;table-of-contents&quot;&gt;
+    &lt;li&gt;&lt;a href=&quot;#何をやるか&quot;&gt;何をやるか&lt;/a&gt;&lt;/li&gt;
+    &lt;li&gt;&lt;a href=&quot;#Docker-開発環境の作成&quot;&gt;Docker 開発環境の作成&lt;/a&gt;&lt;/li&gt;
+    &lt;li&gt;&lt;a href=&quot;#maingo&quot;&gt;main.go&lt;/a&gt;&lt;/li&gt;
+    &lt;li&gt;&lt;a href=&quot;#参考&quot;&gt;参考&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h1 id=&quot;何をやるか&quot;&gt;何をやるか&lt;/h1&gt;
+
+&lt;p&gt;これから何回かに分けて、 Docker + Go + Gin（Webフレームワーク）の開発環境を整えていきます。&lt;/p&gt;
+
+&lt;p&gt;ディレクトリ構成やコマンドの書き方、変更検知してコンパイルなど、開発に必要な最低限の環境を整えていきます。&lt;/p&gt;
+
+&lt;p&gt;今回はとりあえず Docker 上で go を動かすまでです。&lt;/p&gt;
+
+&lt;h1 id=&quot;Docker-開発環境の作成&quot;&gt;Docker 開発環境の作成&lt;/h1&gt;
+
+&lt;p&gt;とりあえず docker-compose.yml を作成する。&lt;/p&gt;
+
+&lt;p&gt;Dockerfile は build ディレクトリ以下に置くのが正しいが、
+docker-compose.yml はどこに置くか微妙なところ。
+今回 docker-compose.yml はローカル開発のためだけに使うので、
+リポジトリのルートに置いた。&lt;/p&gt;
+
+&lt;pre class=&quot;code lang-yaml&quot; data-lang=&quot;yaml&quot; data-unlink&gt;&lt;span class=&quot;synIdentifier&quot;&gt;version&lt;/span&gt;&lt;span class=&quot;synSpecial&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;synConstant&quot;&gt;&amp;quot;3&amp;quot;&lt;/span&gt;
+&lt;span class=&quot;synIdentifier&quot;&gt;services&lt;/span&gt;&lt;span class=&quot;synSpecial&quot;&gt;:&lt;/span&gt;
+  &lt;span class=&quot;synIdentifier&quot;&gt;app&lt;/span&gt;&lt;span class=&quot;synSpecial&quot;&gt;:&lt;/span&gt;
+    &lt;span class=&quot;synIdentifier&quot;&gt;container_name&lt;/span&gt;&lt;span class=&quot;synSpecial&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;synConstant&quot;&gt;&amp;quot;app&amp;quot;&lt;/span&gt;
+    &lt;span class=&quot;synIdentifier&quot;&gt;image&lt;/span&gt;&lt;span class=&quot;synSpecial&quot;&gt;:&lt;/span&gt; golang:1.16
+    &lt;span class=&quot;synIdentifier&quot;&gt;volumes&lt;/span&gt;&lt;span class=&quot;synSpecial&quot;&gt;:&lt;/span&gt;
+      &lt;span class=&quot;synStatement&quot;&gt;- &lt;/span&gt;./:/code
+    &lt;span class=&quot;synIdentifier&quot;&gt;tty&lt;/span&gt;&lt;span class=&quot;synSpecial&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;synConstant&quot;&gt;true&lt;/span&gt;
+    &lt;span class=&quot;synIdentifier&quot;&gt;working_dir&lt;/span&gt;&lt;span class=&quot;synSpecial&quot;&gt;:&lt;/span&gt; /code
+    &lt;span class=&quot;synIdentifier&quot;&gt;command&lt;/span&gt;&lt;span class=&quot;synSpecial&quot;&gt;:&lt;/span&gt; /bin/bash
+&lt;/pre&gt;
+
+
+&lt;h1 id=&quot;maingo&quot;&gt;main.go&lt;/h1&gt;
+
+&lt;p&gt;main.go をリポジトリルートに用意する。&lt;/p&gt;
+
+&lt;p&gt;Goのディレクトリ構成のスタンダードには main.go を配置しておく場所については明記されていなかった。
+とりあえずリポジトリのルートに配置することにした。&lt;/p&gt;
+
+&lt;pre class=&quot;code lang-go&quot; data-lang=&quot;go&quot; data-unlink&gt;&lt;span class=&quot;synStatement&quot;&gt;package&lt;/span&gt; main
+
+&lt;span class=&quot;synStatement&quot;&gt;import&lt;/span&gt; &lt;span class=&quot;synConstant&quot;&gt;&amp;quot;fmt&amp;quot;&lt;/span&gt;
+
+&lt;span class=&quot;synStatement&quot;&gt;func&lt;/span&gt; main()  {
+    fmt.Println(&lt;span class=&quot;synConstant&quot;&gt;&amp;quot;started&amp;quot;&lt;/span&gt;)
+}
+&lt;/pre&gt;
+
+
+&lt;p&gt;動作確認。&lt;/p&gt;
+
+&lt;pre class=&quot;code lang-sh&quot; data-lang=&quot;sh&quot; data-unlink&gt;$ docker-compose up &lt;span class=&quot;synSpecial&quot;&gt;-d&lt;/span&gt;
+
+$ docker-compose ps
+Name    Command    State   Ports
+--------------------------------
+app    /bin/bash   Up
+
+$ docker &lt;span class=&quot;synStatement&quot;&gt;exec&lt;/span&gt; &lt;span class=&quot;synSpecial&quot;&gt;-it&lt;/span&gt; app go run main.go
+started
+&lt;/pre&gt;
+
+
+&lt;h1 id=&quot;参考&quot;&gt;参考&lt;/h1&gt;
+
+&lt;p&gt;Go のディレクトリ構造のスタンダードについて&lt;/p&gt;
+
+&lt;p&gt;&lt;iframe src=&quot;https://hatenablog-parts.com/embed?url=https%3A%2F%2Fgithub.com%2Fgolang-standards%2Fproject-layout%2Fblob%2Fmaster%2FREADME_ja.md&quot; title=&quot;golang-standards/project-layout&quot; class=&quot;embed-card embed-webcard&quot; scrolling=&quot;no&quot; frameborder=&quot;0&quot; style=&quot;display: block; width: 100%; height: 155px; max-width: 500px; margin: 10px 0px;&quot;&gt;&lt;/iframe&gt;&lt;cite class=&quot;hatena-citation&quot;&gt;&lt;a href=&quot;https://github.com/golang-standards/project-layout/blob/master/README_ja.md&quot;&gt;github.com&lt;/a&gt;&lt;/cite&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;iframe src=&quot;https://hatenablog-parts.com/embed?url=https%3A%2F%2Fqiita.com%2Fsueken%2Fitems%2F87093e5941bfbc09bea8&quot; title=&quot;Goにはディレクトリ構成のスタンダードがあるらしい。 - Qiita&quot; class=&quot;embed-card embed-webcard&quot; scrolling=&quot;no&quot; frameborder=&quot;0&quot; style=&quot;display: block; width: 100%; height: 155px; max-width: 500px; margin: 10px 0px;&quot;&gt;&lt;/iframe&gt;&lt;cite class=&quot;hatena-citation&quot;&gt;&lt;a href=&quot;https://qiita.com/sueken/items/87093e5941bfbc09bea8&quot;&gt;qiita.com&lt;/a&gt;&lt;/cite&gt;&lt;/p&gt;
+</description>          <pubDate>Fri, 26 Mar 2021 07:00:00 +0900</pubDate>
+          <guid isPermalink="false">hatenablog://entry/26006613707830204</guid>
+          
+            <category>Go言語</category>
+          
+            <category>Docker</category>
+          
+            <category>プログラミング・開発</category>
+          
+          <enclosure url="https://cdn-ak.f.st-hatena.com/images/fotolife/y/yoshiki_utakata/20210324/20210324115308.png" type="image/png" length="0" />
+        </item>
+      
+    
+      
+      
+        <item>
+          <title>AWS ALB のヘルスチェックと Django の ALLOWED_HOSTS</title>
+          <link>https://www.utakata.work/entry/2021/03/24/114349</link>          <description>&lt;p&gt;&lt;span itemscope itemtype=&quot;http://schema.org/Photograph&quot;&gt;&lt;img src=&quot;https://cdn-ak.f.st-hatena.com/images/fotolife/y/yoshiki_utakata/20210307/20210307171243.png&quot; alt=&quot;f:id:yoshiki_utakata:20210307171243p:plain&quot; title=&quot;&quot; class=&quot;hatena-fotolife&quot; itemprop=&quot;image&quot;&gt;&lt;/span&gt;&lt;/p&gt;
+
+&lt;ul class=&quot;table-of-contents&quot;&gt;
+    &lt;li&gt;&lt;a href=&quot;#はじめに&quot;&gt;はじめに&lt;/a&gt;&lt;/li&gt;
+    &lt;li&gt;&lt;a href=&quot;#ALLOWED_HOSTS-との兼ね合い&quot;&gt;ALLOWED_HOSTS との兼ね合い&lt;/a&gt;&lt;/li&gt;
+    &lt;li&gt;&lt;a href=&quot;#対策&quot;&gt;対策&lt;/a&gt;&lt;/li&gt;
+    &lt;li&gt;&lt;a href=&quot;#ALLOWED_HOSTS-の意味&quot;&gt;ALLOWED_HOSTS の意味&lt;/a&gt;&lt;/li&gt;
+    &lt;li&gt;&lt;a href=&quot;#結局どうすればいいのか&quot;&gt;結局どうすればいいのか&lt;/a&gt;&lt;ul&gt;
+            &lt;li&gt;&lt;a href=&quot;#事例を調査する&quot;&gt;事例を調査する&lt;/a&gt;&lt;/li&gt;
+        &lt;/ul&gt;
+    &lt;/li&gt;
+    &lt;li&gt;&lt;a href=&quot;#結論&quot;&gt;結論&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h1 id=&quot;はじめに&quot;&gt;はじめに&lt;/h1&gt;
+
+&lt;p&gt;一般的に、 AWS で Web アプリケーションを動かすときは、 Application Load Balancer &lt;a href=&quot;#f-7c9e4ab9&quot; name=&quot;fn-7c9e4ab9&quot; title=&quot;AWS には Elastic Load Banancer (ELB) という、ロードバランサーを立てられるサービスがありますが、立てられるロードバランサーの種類に Classic Load Banancer や Application Load Balancer 、 Network Load Balancer などがあります。&quot;&gt;*1&lt;/a&gt; と EC2 を利用します。&lt;/p&gt;
+
+&lt;p&gt;Application Load Balancer を使う場合、ヘルスチェックの設定をする必要がります。&lt;/p&gt;
+
+&lt;p&gt;例えば、 urls.py で、 Django のエンドポイントを追加し、&lt;/p&gt;
+
+&lt;pre class=&quot;code lang-python&quot; data-lang=&quot;python&quot; data-unlink&gt;urlpatterns = [
+    ...
+    &lt;span class=&quot;synComment&quot;&gt;# LB からのヘルスチェックに答えるためのURLで、アプリが起動していれば常に 200 OK を返す&lt;/span&gt;
+    url(&lt;span class=&quot;synConstant&quot;&gt;r&#39;^status$&#39;&lt;/span&gt;, &lt;span class=&quot;synStatement&quot;&gt;lambda&lt;/span&gt; request: HttpResponse()),
+]
+&lt;/pre&gt;
+
+
+&lt;p&gt;LB からは /status に対してリクエストし、ステータスコード 200 が返ってきたらヘルスチェックOKとします。&lt;/p&gt;
+
+&lt;h1 id=&quot;ALLOWED_HOSTS-との兼ね合い&quot;&gt;ALLOWED_HOSTS との兼ね合い&lt;/h1&gt;
+
+&lt;p&gt;しかし、 Django には &lt;code&gt;ALLOWED_HOSTS&lt;/code&gt; という設定があります。&lt;/p&gt;
+
+&lt;p&gt;例えば、 &lt;a href=&quot;http://localhost/status&quot;&gt;http://localhost/status&lt;/a&gt; のように Django にアクセスする場合は、 &lt;code&gt;ALLOWED_HOSTS&lt;/code&gt; に &lt;code&gt;localhost&lt;/code&gt; が追加されていないとアクセスできません。&lt;/p&gt;
+
+&lt;pre class=&quot;code lang-python&quot; data-lang=&quot;python&quot; data-unlink&gt;ALLOWED_HOSTS = [
+    &lt;span class=&quot;synConstant&quot;&gt;&amp;quot;localhost&amp;quot;&lt;/span&gt;,
+]
+&lt;/pre&gt;
+
+
+&lt;p&gt;ALLOWED_HOSTS に追加されていないホスト名でアクセスすると、ステータスコード 403 のエラーになります。&lt;/p&gt;
+
+&lt;p&gt;AWS Application Load Balancer は、&lt;code&gt;http://アプリがデプロイされているEC2のプライベートIP&lt;/code&gt; にアクセスして、ヘルスチェックを行います。&lt;/p&gt;
+
+&lt;p&gt;&lt;code&gt;アプリがデプロイされているEC2のプライベートIP&lt;/code&gt; を ALLOWED_HOSTS に追加していないと、403 エラーになってしまい、ヘルスチェックに失敗してしまいます。&lt;/p&gt;
+
+&lt;h1 id=&quot;対策&quot;&gt;対策&lt;/h1&gt;
+
+&lt;p&gt;対策は色々考えられます。&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;Status Code が 403 ならヘルスチェック OK とする&lt;/li&gt;
+&lt;li&gt;アプリケーションが動いている EC2 のプライベートIPを動的に取得して許可するようにする&lt;/li&gt;
+&lt;li&gt;プライベートIPなら無条件でアクセス許可するようにする&lt;/li&gt;
+&lt;li&gt;どんなホストでアクセスされてもアクセスを許可するようにする&lt;/li&gt;
+&lt;/ul&gt;
+
+
+&lt;p&gt;全アクセスを許可するのが一番ラクだが、ALLOWED_HOSTS という設定項目が存在するのには意味があるはずです。 Django のドキュメントを読んでみます。&lt;/p&gt;
+
+&lt;h1 id=&quot;ALLOWED_HOSTS-の意味&quot;&gt;ALLOWED_HOSTS の意味&lt;/h1&gt;
+
+&lt;p&gt;Django の公式ドキュメントの ALLOWED_HOSTS について書いてある部分を読むと、&lt;/p&gt;
+
+&lt;p&gt;&lt;a href=&quot;https://docs.djangoproject.com/ja/3.1/ref/settings/#allowed-hosts&quot;&gt;https://docs.djangoproject.com/ja/3.1/ref/settings/#allowed-hosts&lt;/a&gt;&lt;/p&gt;
+
+&lt;blockquote&gt;&lt;p&gt;Django サイトを配信できるホスト/ドメイン名を表す文字列のリストです。これはセキュリティ対策の手段の1つで、一見安全な設定の Web サーバでも晒される可能性が高い、 HTTP Host header 攻撃 を防ぐことができます。&lt;/p&gt;&lt;/blockquote&gt;
+
+&lt;p&gt;さらに、「Hostヘッダーの検証」について書いてある部分を読むと、&lt;/p&gt;
+
+&lt;p&gt;&lt;a href=&quot;https://docs.djangoproject.com/ja/3.1/topics/security/#host-header-validation&quot;&gt;https://docs.djangoproject.com/ja/3.1/topics/security/#host-header-validation&lt;/a&gt;&lt;/p&gt;
+
+&lt;blockquote&gt;&lt;p&gt;Djangoはいくつかのケースで、URLを組み立てるためにクライアントから送られてきた Host ヘッダーを使用します。 ...&lt;/p&gt;&lt;/blockquote&gt;
+
+&lt;p&gt;とあります。&lt;/p&gt;
+
+&lt;p&gt;つまり、&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;Django は、ページのURLを組み立てるときに、リクエストに含まれる Host ヘッダーを利用することがあります。&lt;/li&gt;
+&lt;li&gt;通常 Host ヘッダーは、 DNS 解決のときに使われたヘッダーが利用されます。しかし、単なるリクエストヘッダーのため書き換えは容易です。そのため、変な URL を生成することが可能になってしまいます。&lt;/li&gt;
+&lt;/ul&gt;
+
+
+&lt;p&gt;リクエストヘッダを利用して、URL生成のような処理を行うのは、一般的には良くないです。&lt;/p&gt;
+
+&lt;p&gt;Django は、便宜上、  Host ヘッダを利用しているようで、そのかわり、 ALLOWED_HOSTS で、Hostヘッダに指定できる値を制限しているのです。&lt;/p&gt;
+
+&lt;p&gt;つまり、結論としては、「ALLOWED_HOSTS ですべてのホストを許可するのは危ない」となります。&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;ホストヘッダインジェクションの例&lt;/strong&gt;&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;a href=&quot;http://blog.a-way-out.net/blog/2015/11/06/host-header-injection/&quot;&gt;http://blog.a-way-out.net/blog/2015/11/06/host-header-injection/&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+
+&lt;p&gt;Host ヘッダーに限らず、ユーザーが入力可能な値を信頼して利用するのは危険です。&lt;/p&gt;
+
+&lt;p&gt;ヘッダーは、 JavaScript で書き換えができないため、そんなに危険ではないという話もあります。&lt;/p&gt;
+
+&lt;p&gt;&lt;a href=&quot;http://hasegawa.hatenablog.com/entry/20151110/p1&quot;&gt;http://hasegawa.hatenablog.com/entry/20151110/p1&lt;/a&gt;&lt;/p&gt;
+
+&lt;p&gt;しかし、 Django は Host ヘッダーを信用する実装になっている（と思われる）ため、無闇に全許可するのはやめるべきです。&lt;/p&gt;
+
+&lt;h1 id=&quot;結局どうすればいいのか&quot;&gt;結局どうすればいいのか&lt;/h1&gt;
+
+&lt;p&gt;選択肢はこのいずれかになります。&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;Status Code が 403 ならヘルスチェック OK とする&lt;/li&gt;
+&lt;li&gt;アプリケーションが動いている EC2 のプライベートIPを動的に取得して許可するようにする&lt;/li&gt;
+&lt;li&gt;プライベートIPなら無条件でアクセス許可するようにする&lt;/li&gt;
+&lt;/ul&gt;
+
+
+&lt;h2 id=&quot;事例を調査する&quot;&gt;事例を調査する&lt;/h2&gt;
+
+&lt;p&gt;&lt;strong&gt;動的にEC2のIPを取得して許可する&lt;/strong&gt; 例が多いように思いました。&lt;/p&gt;
+
+&lt;p&gt;&lt;iframe src=&quot;https://hatenablog-parts.com/embed?url=https%3A%2F%2Fprogl.hatenablog.com%2Fentry%2F2018%2F02%2F12%2F022426&quot; title=&quot;ELB 配下に Django アプリケーションを置く時の ALLOWED_HOSTS 設定 - プログラミングメモ帳&quot; class=&quot;embed-card embed-blogcard&quot; scrolling=&quot;no&quot; frameborder=&quot;0&quot; style=&quot;display: block; width: 100%; height: 190px; max-width: 500px; margin: 10px 0px;&quot;&gt;&lt;/iframe&gt;&lt;cite class=&quot;hatena-citation&quot;&gt;&lt;a href=&quot;https://progl.hatenablog.com/entry/2018/02/12/022426&quot;&gt;progl.hatenablog.com&lt;/a&gt;&lt;/cite&gt;&lt;/p&gt;
+
+&lt;p&gt;デメリットとして、IPアドレスが取得できなかった場合にアプリを起動できなくなってしまいます。&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;「Status Code が 403 ならヘルスチェック OK とする」&lt;/strong&gt;はどうでしょうか。&lt;/p&gt;
+
+&lt;p&gt;若干気持ち悪さはありますが&lt;a href=&quot;#f-abf95f65&quot; name=&quot;fn-abf95f65&quot; title=&quot;Status Code が正常系ではないのに、ヘルスチェックがOKとなっている点が&quot;&gt;*2&lt;/a&gt;、 Django アプリケーションが動いていることは確認できるので、問題ないです。&lt;/p&gt;
+
+&lt;p&gt;私は実際この方法を採用おり、問題なく動いています。ヘルスチェックのためのエンドポイントを用意しなくていいので楽です。難しい問題から開放されます。&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;「プライベートIPなら無条件でアクセス許可するようにする」&lt;/strong&gt; ですが、Django の ALLOWED_HOSTS は CIDR （IPレンジ）が記述できないので、非常に面倒です。&lt;/p&gt;
+
+&lt;p&gt;&lt;iframe src=&quot;https://hatenablog-parts.com/embed?url=https%3A%2F%2Fstackoverflow.com%2Fquestions%2F37031749%2Fdjango-allowed-hosts-ips-range&quot; title=&quot;Django ALLOWED_HOSTS IPs range&quot; class=&quot;embed-card embed-webcard&quot; scrolling=&quot;no&quot; frameborder=&quot;0&quot; style=&quot;display: block; width: 100%; height: 155px; max-width: 500px; margin: 10px 0px;&quot;&gt;&lt;/iframe&gt;&lt;cite class=&quot;hatena-citation&quot;&gt;&lt;a href=&quot;https://stackoverflow.com/questions/37031749/django-allowed-hosts-ips-range&quot;&gt;stackoverflow.com&lt;/a&gt;&lt;/cite&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;nginx で 200 を返す&lt;/strong&gt; という案もありましたが、Django が正常に動いてなくてもヘルスチェックがOKになってしまうのがデメリットです。&lt;/p&gt;
+
+&lt;h1 id=&quot;結論&quot;&gt;結論&lt;/h1&gt;
+
+&lt;p&gt;結論は&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;Status Code が 403 ならヘルスチェック OK とする&lt;/li&gt;
+&lt;li&gt;アプリケーションが動いている EC2 のプライベートIPを動的に取得して許可するようにする&lt;/li&gt;
+&lt;/ul&gt;
+
+
+&lt;p&gt;がいいかなと思いました。&lt;/p&gt;
+
+&lt;p&gt;また、広くみんなに使われている手段は後者でした。&lt;/p&gt;
+&lt;div class=&quot;footnote&quot;&gt;
+&lt;p class=&quot;footnote&quot;&gt;&lt;a href=&quot;#fn-7c9e4ab9&quot; name=&quot;f-7c9e4ab9&quot; class=&quot;footnote-number&quot;&gt;*1&lt;/a&gt;&lt;span class=&quot;footnote-delimiter&quot;&gt;:&lt;/span&gt;&lt;span class=&quot;footnote-text&quot;&gt;AWS には Elastic Load Banancer (ELB) という、ロードバランサーを立てられるサービスがありますが、立てられるロードバランサーの種類に Classic Load Banancer や Application Load Balancer 、 Network Load Balancer などがあります。&lt;/span&gt;&lt;/p&gt;
+&lt;p class=&quot;footnote&quot;&gt;&lt;a href=&quot;#fn-abf95f65&quot; name=&quot;f-abf95f65&quot; class=&quot;footnote-number&quot;&gt;*2&lt;/a&gt;&lt;span class=&quot;footnote-delimiter&quot;&gt;:&lt;/span&gt;&lt;span class=&quot;footnote-text&quot;&gt;Status Code が正常系ではないのに、ヘルスチェックがOKとなっている点が&lt;/span&gt;&lt;/p&gt;
+&lt;/div&gt;</description>          <pubDate>Wed, 24 Mar 2021 11:43:49 +0900</pubDate>
+          <guid isPermalink="false">hatenablog://entry/26006613707073052</guid>
+          
+            <category>AWS</category>
+          
+            <category>Django</category>
+          
+            <category>Python</category>
+          
+            <category>プログラミング・開発</category>
+          
+          <enclosure url="https://cdn-ak.f.st-hatena.com/images/fotolife/y/yoshiki_utakata/20210307/20210307171243.png" type="image/png" length="0" />
+        </item>
+      
+    
+      
+      
+        <item>
+          <title>pyenv を使っている環境で bad interpreter: /usr/local/opt/python@2/bin/python2.7: no such file or directory</title>
+          <link>https://www.utakata.work/entry/2021/03/22/112827</link>          <description>&lt;p&gt;&lt;span itemscope itemtype=&quot;http://schema.org/Photograph&quot;&gt;&lt;img src=&quot;https://cdn-ak.f.st-hatena.com/images/fotolife/y/yoshiki_utakata/20210322/20210322112724.png&quot; alt=&quot;f:id:yoshiki_utakata:20210322112724p:plain&quot; title=&quot;&quot; class=&quot;hatena-fotolife&quot; itemprop=&quot;image&quot;&gt;&lt;/span&gt;&lt;/p&gt;
+
+&lt;ul class=&quot;table-of-contents&quot;&gt;
+    &lt;li&gt;&lt;a href=&quot;#問題&quot;&gt;問題&lt;/a&gt;&lt;/li&gt;
+    &lt;li&gt;&lt;a href=&quot;#解決方法&quot;&gt;解決方法&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h1 id=&quot;問題&quot;&gt;問題&lt;/h1&gt;
+
+&lt;p&gt;先日、久々に eb コマンド（Python で書かれている、 AWS ElasticBeanstalk の CLI ツール）を使おうとして、以下のエラーになった。&lt;/p&gt;
+
+&lt;pre class=&quot;code lang-sh&quot; data-lang=&quot;sh&quot; data-unlink&gt;$ eb list
+zsh: /usr/&lt;span class=&quot;synStatement&quot;&gt;local&lt;/span&gt;/bin/eb: bad interpreter: /usr/&lt;span class=&quot;synStatement&quot;&gt;local&lt;/span&gt;/opt/python@&lt;span class=&quot;synConstant&quot;&gt;2&lt;/span&gt;/bin/python2.7: no such file or directory
+&lt;/pre&gt;
+
+
+&lt;p&gt;python コマンドを叩くと、 python 2.7 が入っていた&lt;/p&gt;
+
+&lt;pre class=&quot;code lang-sh&quot; data-lang=&quot;sh&quot; data-unlink&gt;$ python &lt;span class=&quot;synSpecial&quot;&gt;--version&lt;/span&gt;
+Python &lt;span class=&quot;synConstant&quot;&gt;2&lt;/span&gt;.&lt;span class=&quot;synConstant&quot;&gt;7&lt;/span&gt;.&lt;span class=&quot;synConstant&quot;&gt;16&lt;/span&gt;
+&lt;/pre&gt;
+
+
+&lt;p&gt;試しに、 &lt;code&gt;pip --version&lt;/code&gt; しても、 bad interpreter のエラーが出た&lt;/p&gt;
+
+&lt;pre class=&quot;code lang-sh&quot; data-lang=&quot;sh&quot; data-unlink&gt;$ pip &lt;span class=&quot;synSpecial&quot;&gt;--version&lt;/span&gt;
+/Users/sakamoto/.pyenv/shims/pip: line 21: /usr/&lt;span class=&quot;synStatement&quot;&gt;local&lt;/span&gt;/Cellar/pyenv/&lt;span class=&quot;synConstant&quot;&gt;1&lt;/span&gt;.&lt;span class=&quot;synConstant&quot;&gt;2&lt;/span&gt;.&lt;span class=&quot;synConstant&quot;&gt;20&lt;/span&gt;/libexec/pyenv: No such file or directory
+&lt;/pre&gt;
+
+
+&lt;p&gt;pyenv を使っていて、バージョンは 1.2.21&lt;/p&gt;
+
+&lt;pre class=&quot;code lang-sh&quot; data-lang=&quot;sh&quot; data-unlink&gt;$ pyenv
+pyenv &lt;span class=&quot;synConstant&quot;&gt;1&lt;/span&gt;.&lt;span class=&quot;synConstant&quot;&gt;2&lt;/span&gt;.&lt;span class=&quot;synConstant&quot;&gt;21&lt;/span&gt;
+
+$ pyenv versions
+  system
+  &lt;span class=&quot;synConstant&quot;&gt;3&lt;/span&gt;.&lt;span class=&quot;synConstant&quot;&gt;4&lt;/span&gt;.&lt;span class=&quot;synConstant&quot;&gt;3&lt;/span&gt;
+* &lt;span class=&quot;synConstant&quot;&gt;3&lt;/span&gt;.&lt;span class=&quot;synConstant&quot;&gt;6&lt;/span&gt;.&lt;span class=&quot;synConstant&quot;&gt;5&lt;/span&gt; &lt;span class=&quot;synPreProc&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;synSpecial&quot;&gt;set by /Users/yoshiyuki_sakamoto/.pyenv/version&lt;/span&gt;&lt;span class=&quot;synPreProc&quot;&gt;)&lt;/span&gt;
+&lt;/pre&gt;
+
+
+&lt;p&gt;何故か python3 コマンドの挙動もおかしい&lt;/p&gt;
+
+&lt;pre class=&quot;code lang-sh&quot; data-lang=&quot;sh&quot; data-unlink&gt;$ python3 &lt;span class=&quot;synSpecial&quot;&gt;--version&lt;/span&gt;
+/Users/sakamoto/.pyenv/shims/python3: line 21: /usr/&lt;span class=&quot;synStatement&quot;&gt;local&lt;/span&gt;/Cellar/pyenv/&lt;span class=&quot;synConstant&quot;&gt;1&lt;/span&gt;.&lt;span class=&quot;synConstant&quot;&gt;2&lt;/span&gt;.&lt;span class=&quot;synConstant&quot;&gt;20&lt;/span&gt;/libexec/pyenv: No such file or directory
+&lt;/pre&gt;
+
+
+&lt;h1 id=&quot;解決方法&quot;&gt;解決方法&lt;/h1&gt;
+
+&lt;p&gt;自分が以前書いた記事を参考に、 python3 で aws と awsebcli をインストールしたいが、その前に python まわりが壊れているっぽいので治す。&lt;/p&gt;
+
+&lt;p&gt;pyenv の symlink がおかしくなっているようなので、 rahash してなおす。&lt;/p&gt;
+
+&lt;pre class=&quot;code lang-sh&quot; data-lang=&quot;sh&quot; data-unlink&gt;$ pyenv rehash
+&lt;/pre&gt;
+
+
+&lt;p&gt;これで、 python 周りの依存関係がきれいになった&lt;/p&gt;
+
+&lt;pre class=&quot;code lang-sh&quot; data-lang=&quot;sh&quot; data-unlink&gt;&lt;span class=&quot;synComment&quot;&gt;# 何故か python コマンドだけは python2 のままだが...&lt;/span&gt;
+$ python &lt;span class=&quot;synSpecial&quot;&gt;--version&lt;/span&gt;
+Python &lt;span class=&quot;synConstant&quot;&gt;2&lt;/span&gt;.&lt;span class=&quot;synConstant&quot;&gt;7&lt;/span&gt;.&lt;span class=&quot;synConstant&quot;&gt;16&lt;/span&gt;
+
+$ which python
+/usr/bin/python
+
+&lt;span class=&quot;synComment&quot;&gt;# python3 は pyenv のものになっている&lt;/span&gt;
+$ python3 &lt;span class=&quot;synSpecial&quot;&gt;--version&lt;/span&gt;
+Python &lt;span class=&quot;synConstant&quot;&gt;3&lt;/span&gt;.&lt;span class=&quot;synConstant&quot;&gt;6&lt;/span&gt;.&lt;span class=&quot;synConstant&quot;&gt;5&lt;/span&gt;
+
+$ which python3
+/Users/sakamoto/.pyenv/shims/python3
+
+&lt;span class=&quot;synComment&quot;&gt;# pip コマンドは pyenv の python3 のものになっている&lt;/span&gt;
+$ pip &lt;span class=&quot;synSpecial&quot;&gt;--version&lt;/span&gt;
+pip &lt;span class=&quot;synConstant&quot;&gt;9&lt;/span&gt;.&lt;span class=&quot;synConstant&quot;&gt;0&lt;/span&gt;.&lt;span class=&quot;synConstant&quot;&gt;3&lt;/span&gt; from /Users/sakamoto/.pyenv/versions/&lt;span class=&quot;synConstant&quot;&gt;3&lt;/span&gt;.&lt;span class=&quot;synConstant&quot;&gt;6&lt;/span&gt;.&lt;span class=&quot;synConstant&quot;&gt;5&lt;/span&gt;/lib/python3.&lt;span class=&quot;synConstant&quot;&gt;6&lt;/span&gt;/site-packages &lt;span class=&quot;synPreProc&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;synSpecial&quot;&gt;python &lt;/span&gt;&lt;span class=&quot;synConstant&quot;&gt;3&lt;/span&gt;&lt;span class=&quot;synSpecial&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;synConstant&quot;&gt;6&lt;/span&gt;&lt;span class=&quot;synPreProc&quot;&gt;)&lt;/span&gt;
+&lt;/pre&gt;
+
+
+&lt;p&gt;これで問題なく、 python3 コマンドと pip コマンドが叩けるようになったので、記事の通り aws と awsebcli を再インストールする。&lt;/p&gt;
+
+&lt;pre class=&quot;code lang-sh&quot; data-lang=&quot;sh&quot; data-unlink&gt;$ pip install aws
+$ pip install awsebcli &lt;span class=&quot;synSpecial&quot;&gt;--upgrade&lt;/span&gt; &lt;span class=&quot;synSpecial&quot;&gt;--user&lt;/span&gt;
+&lt;/pre&gt;
+
+
+&lt;p&gt;ちなみに以前の記事とはこちら&lt;/p&gt;
+
+&lt;p&gt;&lt;iframe src=&quot;https://hatenablog-parts.com/embed?url=https%3A%2F%2Fwww.utakata.work%2Fentry%2F2020%2F12%2F23%2F072609&quot; title=&quot;bad interpreter: /usr/local/opt/python/bin/python3.7: no such file or directory - 猫でもわかるWebプログラミング&quot; class=&quot;embed-card embed-blogcard&quot; scrolling=&quot;no&quot; frameborder=&quot;0&quot; style=&quot;display: block; width: 100%; height: 190px; max-width: 500px; margin: 10px 0px;&quot;&gt;&lt;/iframe&gt;&lt;cite class=&quot;hatena-citation&quot;&gt;&lt;a href=&quot;https://www.utakata.work/entry/2020/12/23/072609&quot;&gt;www.utakata.work&lt;/a&gt;&lt;/cite&gt;&lt;/p&gt;
+</description>          <pubDate>Mon, 22 Mar 2021 11:28:27 +0900</pubDate>
+          <guid isPermalink="false">hatenablog://entry/26006613706990335</guid>
+          
+            <category>Python</category>
+          
+            <category>プログラミング・開発</category>
+          
+          <enclosure url="https://cdn-ak.f.st-hatena.com/images/fotolife/y/yoshiki_utakata/20210322/20210322112724.png" type="image/png" length="0" />
+        </item>
+      
+    
+  </channel>
+</rss>

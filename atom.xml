@@ -1,0 +1,164 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom" xmlns:media="http://search.yahoo.com/mrss/" xml:lang="en-US">
+  <id>tag:github.com,2008:https://github.com/laravel/laravel/releases</id>
+  <link type="text/html" rel="alternate" href="https://github.com/laravel/laravel/releases"/>
+  <link type="application/atom+xml" rel="self" href="https://github.com/laravel/laravel/releases.atom"/>
+  <title>Release notes from laravel</title>
+  <updated>2021-06-01T15:49:26Z</updated>
+  <entry>
+    <id>tag:github.com,2008:Repository/1863329/v8.5.19</id>
+    <updated>2021-06-01T15:49:43Z</updated>
+    <link rel="alternate" type="text/html" href="https://github.com/laravel/laravel/releases/tag/v8.5.19"/>
+    <title>v8.5.19</title>
+    <content type="html">&lt;h3&gt;Changed&lt;/h3&gt;
+&lt;ul&gt;
+&lt;li&gt;Update skeleton for filesystem tweaks to make sail usage easier (&lt;a href=&quot;https://github.com/laravel/laravel/commit/c5d38d469a447d6831c3cf56d193be7941d6586f&quot;&gt;c5d38d4&lt;/a&gt;)﻿&lt;/li&gt;
+&lt;/ul&gt;</content>
+    <author>
+      <name>driesvints</name>
+    </author>
+    <media:thumbnail height="30" width="30" url="https://avatars.githubusercontent.com/u/594614?s=60&amp;v=4"/>
+  </entry>
+  <entry>
+    <id>tag:github.com,2008:Repository/1863329/v8.5.18</id>
+    <updated>2021-05-18T15:37:45Z</updated>
+    <link rel="alternate" type="text/html" href="https://github.com/laravel/laravel/releases/tag/v8.5.18"/>
+    <title>v8.5.18</title>
+    <content type="html">&lt;h3&gt;Changed&lt;/h3&gt;
+&lt;ul&gt;
+&lt;li&gt;Add Octane cache store (&lt;a href=&quot;https://github.com/laravel/laravel/pull/5610&quot; data-hovercard-type=&quot;pull_request&quot; data-hovercard-url=&quot;/laravel/laravel/pull/5610/hovercard&quot;&gt;#5610&lt;/a&gt;, &lt;a href=&quot;https://github.com/laravel/laravel/commit/637c85d624bf19355025b68aaa90e6cadf8a2881&quot;&gt;637c85d&lt;/a&gt;)﻿&lt;/li&gt;
+&lt;/ul&gt;</content>
+    <author>
+      <name>driesvints</name>
+    </author>
+    <media:thumbnail height="30" width="30" url="https://avatars.githubusercontent.com/u/594614?s=60&amp;v=4"/>
+  </entry>
+  <entry>
+    <id>tag:github.com,2008:Repository/1863329/v8.5.17</id>
+    <updated>2021-05-11T20:49:49Z</updated>
+    <link rel="alternate" type="text/html" href="https://github.com/laravel/laravel/releases/tag/v8.5.17"/>
+    <title>v8.5.17</title>
+    <content type="html">&lt;h3&gt;Security&lt;/h3&gt;
+&lt;ul&gt;
+&lt;li&gt;Bump framework version to include SQL server security fix (&lt;a href=&quot;https://github.com/laravel/laravel/pull/5601&quot; data-hovercard-type=&quot;pull_request&quot; data-hovercard-url=&quot;/laravel/laravel/pull/5601/hovercard&quot;&gt;#5601&lt;/a&gt;)﻿&lt;/li&gt;
+&lt;/ul&gt;</content>
+    <author>
+      <name>driesvints</name>
+    </author>
+    <media:thumbnail height="30" width="30" url="https://avatars.githubusercontent.com/u/594614?s=60&amp;v=4"/>
+  </entry>
+  <entry>
+    <id>tag:github.com,2008:Repository/1863329/v6.20.1</id>
+    <updated>2021-05-11T20:48:13Z</updated>
+    <link rel="alternate" type="text/html" href="https://github.com/laravel/laravel/releases/tag/v6.20.1"/>
+    <title>v6.20.1</title>
+    <content type="html">&lt;h3&gt;Security&lt;/h3&gt;
+&lt;ul&gt;
+&lt;li&gt;Target 1.16.15 of facade/ignition (&lt;a href=&quot;https://github.com/laravel/laravel/pull/5544&quot; data-hovercard-type=&quot;pull_request&quot; data-hovercard-url=&quot;/laravel/laravel/pull/5544/hovercard&quot;&gt;#5544&lt;/a&gt;)&lt;/li&gt;
+&lt;li&gt;Bump framework version to include SQL server security fix (&lt;a href=&quot;https://github.com/laravel/laravel/pull/5602&quot; data-hovercard-type=&quot;pull_request&quot; data-hovercard-url=&quot;/laravel/laravel/pull/5602/hovercard&quot;&gt;#5602&lt;/a&gt;)﻿&lt;/li&gt;
+&lt;/ul&gt;</content>
+    <author>
+      <name>driesvints</name>
+    </author>
+    <media:thumbnail height="30" width="30" url="https://avatars.githubusercontent.com/u/594614?s=60&amp;v=4"/>
+  </entry>
+  <entry>
+    <id>tag:github.com,2008:Repository/1863329/v8.5.16</id>
+    <updated>2021-04-20T16:13:28Z</updated>
+    <link rel="alternate" type="text/html" href="https://github.com/laravel/laravel/releases/tag/v8.5.16"/>
+    <title>v8.5.16</title>
+    <content type="html">&lt;h3&gt;Changed&lt;/h3&gt;
+&lt;ul&gt;
+&lt;li&gt;Rename test methods (&lt;a href=&quot;https://github.com/laravel/laravel/pull/5574&quot; data-hovercard-type=&quot;pull_request&quot; data-hovercard-url=&quot;/laravel/laravel/pull/5574/hovercard&quot;&gt;#5574&lt;/a&gt;)&lt;/li&gt;
+&lt;li&gt;Using faker method instead of properties (&lt;a href=&quot;https://github.com/laravel/laravel/pull/5583&quot; data-hovercard-type=&quot;pull_request&quot; data-hovercard-url=&quot;/laravel/laravel/pull/5583/hovercard&quot;&gt;#5583&lt;/a&gt;)&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h3&gt;Fixed&lt;/h3&gt;
+&lt;ul&gt;
+&lt;li&gt;Ignore SQLite files generated on parallel testing (&lt;a href=&quot;https://github.com/laravel/laravel/pull/5593&quot; data-hovercard-type=&quot;pull_request&quot; data-hovercard-url=&quot;/laravel/laravel/pull/5593/hovercard&quot;&gt;#5593&lt;/a&gt;)﻿&lt;/li&gt;
+&lt;/ul&gt;</content>
+    <author>
+      <name>driesvints</name>
+    </author>
+    <media:thumbnail height="30" width="30" url="https://avatars.githubusercontent.com/u/594614?s=60&amp;v=4"/>
+  </entry>
+  <entry>
+    <id>tag:github.com,2008:Repository/1863329/v8.5.15</id>
+    <updated>2021-03-23T17:25:32Z</updated>
+    <link rel="alternate" type="text/html" href="https://github.com/laravel/laravel/releases/tag/v8.5.15"/>
+    <title>v8.5.15</title>
+    <content type="html">&lt;h3&gt;Changed&lt;/h3&gt;
+&lt;ul&gt;
+&lt;li&gt;Add prohibited validation rule (&lt;a href=&quot;https://github.com/laravel/laravel/pull/5569&quot; data-hovercard-type=&quot;pull_request&quot; data-hovercard-url=&quot;/laravel/laravel/pull/5569/hovercard&quot;&gt;#5569&lt;/a&gt;)&lt;/li&gt;
+&lt;li&gt;Re-order composer.json (&lt;a href=&quot;https://github.com/laravel/laravel/pull/5570&quot; data-hovercard-type=&quot;pull_request&quot; data-hovercard-url=&quot;/laravel/laravel/pull/5570/hovercard&quot;&gt;#5570&lt;/a&gt;)﻿&lt;/li&gt;
+&lt;/ul&gt;</content>
+    <author>
+      <name>driesvints</name>
+    </author>
+    <media:thumbnail height="30" width="30" url="https://avatars.githubusercontent.com/u/594614?s=60&amp;v=4"/>
+  </entry>
+  <entry>
+    <id>tag:github.com,2008:Repository/1863329/v8.5.14</id>
+    <updated>2021-03-16T16:26:41Z</updated>
+    <link rel="alternate" type="text/html" href="https://github.com/laravel/laravel/releases/tag/v8.5.14"/>
+    <title>v8.5.14</title>
+    <content type="html">&lt;h3&gt;Changed&lt;/h3&gt;
+&lt;ul&gt;
+&lt;li&gt;Add language for prohibited_if and prohibited_unless validation rules (&lt;a href=&quot;https://github.com/laravel/laravel/pull/5557&quot; data-hovercard-type=&quot;pull_request&quot; data-hovercard-url=&quot;/laravel/laravel/pull/5557/hovercard&quot;&gt;#5557&lt;/a&gt;)&lt;/li&gt;
+&lt;li&gt;Add date facade alias (&lt;a href=&quot;https://github.com/laravel/laravel/pull/5556&quot; data-hovercard-type=&quot;pull_request&quot; data-hovercard-url=&quot;/laravel/laravel/pull/5556/hovercard&quot;&gt;#5556&lt;/a&gt;)&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h3&gt;Fixed&lt;/h3&gt;
+&lt;ul&gt;
+&lt;li&gt;Add log level config value to stderr channel (&lt;a href=&quot;https://github.com/laravel/laravel/pull/5558&quot; data-hovercard-type=&quot;pull_request&quot; data-hovercard-url=&quot;/laravel/laravel/pull/5558/hovercard&quot;&gt;#5558&lt;/a&gt;)&lt;/li&gt;
+&lt;li&gt;Fix footer on mobile (&lt;a href=&quot;https://github.com/laravel/laravel/pull/5561&quot; data-hovercard-type=&quot;pull_request&quot; data-hovercard-url=&quot;/laravel/laravel/pull/5561/hovercard&quot;&gt;#5561&lt;/a&gt;)﻿&lt;/li&gt;
+&lt;/ul&gt;</content>
+    <author>
+      <name>driesvints</name>
+    </author>
+    <media:thumbnail height="30" width="30" url="https://avatars.githubusercontent.com/u/594614?s=60&amp;v=4"/>
+  </entry>
+  <entry>
+    <id>tag:github.com,2008:Repository/1863329/v8.5.13</id>
+    <updated>2021-03-09T19:10:05Z</updated>
+    <link rel="alternate" type="text/html" href="https://github.com/laravel/laravel/releases/tag/v8.5.13"/>
+    <title>v8.5.13</title>
+    <content type="html">&lt;h3&gt;Changed&lt;/h3&gt;
+&lt;ul&gt;
+&lt;li&gt;Use same default queue name for all drivers (&lt;a href=&quot;https://github.com/laravel/laravel/pull/5549&quot; data-hovercard-type=&quot;pull_request&quot; data-hovercard-url=&quot;/laravel/laravel/pull/5549/hovercard&quot;&gt;#5549&lt;/a&gt;)&lt;/li&gt;
+&lt;li&gt;Standardise &quot;must&quot; and &quot;may&quot; language in validation (&lt;a href=&quot;https://github.com/laravel/laravel/pull/5552&quot; data-hovercard-type=&quot;pull_request&quot; data-hovercard-url=&quot;/laravel/laravel/pull/5552/hovercard&quot;&gt;#5552&lt;/a&gt;)&lt;/li&gt;
+&lt;li&gt;Add missing &#39;after_commit&#39; key to queue config (&lt;a href=&quot;https://github.com/laravel/laravel/pull/5554&quot; data-hovercard-type=&quot;pull_request&quot; data-hovercard-url=&quot;/laravel/laravel/pull/5554/hovercard&quot;&gt;#5554&lt;/a&gt;)﻿&lt;/li&gt;
+&lt;/ul&gt;</content>
+    <author>
+      <name>driesvints</name>
+    </author>
+    <media:thumbnail height="30" width="30" url="https://avatars.githubusercontent.com/u/594614?s=60&amp;v=4"/>
+  </entry>
+  <entry>
+    <id>tag:github.com,2008:Repository/1863329/v8.5.12</id>
+    <updated>2021-03-02T16:36:35Z</updated>
+    <link rel="alternate" type="text/html" href="https://github.com/laravel/laravel/releases/tag/v8.5.12"/>
+    <title>v8.5.12</title>
+    <content type="html">&lt;h3&gt;Fixed&lt;/h3&gt;
+&lt;ul&gt;
+&lt;li&gt;Added sans-serif as Fallback Font (&lt;a href=&quot;https://github.com/laravel/laravel/pull/5543&quot; data-hovercard-type=&quot;pull_request&quot; data-hovercard-url=&quot;/laravel/laravel/pull/5543/hovercard&quot;&gt;#5543&lt;/a&gt;)&lt;/li&gt;
+&lt;li&gt;Don&#39;t trim &lt;code&gt;current_password&lt;/code&gt; (&lt;a href=&quot;https://github.com/laravel/laravel/pull/5546&quot; data-hovercard-type=&quot;pull_request&quot; data-hovercard-url=&quot;/laravel/laravel/pull/5546/hovercard&quot;&gt;#5546&lt;/a&gt;)﻿&lt;/li&gt;
+&lt;/ul&gt;</content>
+    <author>
+      <name>driesvints</name>
+    </author>
+    <media:thumbnail height="30" width="30" url="https://avatars.githubusercontent.com/u/594614?s=60&amp;v=4"/>
+  </entry>
+  <entry>
+    <id>tag:github.com,2008:Repository/1863329/v8.5.11</id>
+    <updated>2021-02-23T20:43:27Z</updated>
+    <link rel="alternate" type="text/html" href="https://github.com/laravel/laravel/releases/tag/v8.5.11"/>
+    <title>v8.5.11</title>
+    <content type="html">&lt;h3&gt;Fixed&lt;/h3&gt;
+&lt;ul&gt;
+&lt;li&gt;Don&#39;t flash &#39;current_password&#39; input (&lt;a href=&quot;https://github.com/laravel/laravel/pull/5541&quot; data-hovercard-type=&quot;pull_request&quot; data-hovercard-url=&quot;/laravel/laravel/pull/5541/hovercard&quot;&gt;#5541&lt;/a&gt;)﻿&lt;/li&gt;
+&lt;/ul&gt;</content>
+    <author>
+      <name>driesvints</name>
+    </author>
+    <media:thumbnail height="30" width="30" url="https://avatars.githubusercontent.com/u/594614?s=60&amp;v=4"/>
+  </entry>
+</feed>
